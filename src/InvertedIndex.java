@@ -1,4 +1,5 @@
 
+import java.awt.Desktop;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
@@ -6,14 +7,12 @@ import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.io.PrintWriter;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Arrays;
 import java.util.Calendar;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.Map;
 import java.util.Scanner;
 import java.util.logging.Level;
@@ -41,7 +40,7 @@ public class InvertedIndex {
 
     private HashMap<String, List<Posting>> indexMap = new HashMap<>();
     private HashMap<Integer, List<Document>> docMap = new HashMap<>();
-    private List<String> fileList = new ArrayList<>();
+    private List<File> fileList = new ArrayList<>();
 
     public static InvertedIndex getInstance() {
         if (instance == null) {
@@ -50,54 +49,74 @@ public class InvertedIndex {
         return instance;
     }
 
-    public void buildIndex(File file) {
-        int termPos = 0;
-        int docPos = 0;
-        int filePos = fileList.indexOf(file.getName());
-        // Check if the file was indexed or not
-        if (filePos == -1) {
-            fileList.add(file.getName());
-            filePos = fileList.size() - 1;
-        }
+    public void buildIndex(List<File> files) {
+        for (int i = 0; i < files.size(); i++) {
+            int termPos = 0;
+            int filePos = fileList.indexOf(files.get(i));
+            // Check if the file was indexed or not
+            if (filePos == -1) {
+                fileList.add(files.get(i));
+                filePos = fileList.size() - 1;
+            }
 
-        try {
-            // Read input file
-            FileReader fileReader = new FileReader(file);
-            BufferedReader bufferedReader = new BufferedReader(fileReader);
-            String line = "";
+            try {
+                // Read input file
+                FileReader fileReader = new FileReader(files.get(i));
+                BufferedReader bufferedReader = new BufferedReader(fileReader);
+                String line = "";
 
-            while ((line = bufferedReader.readLine()) != null) {
-                if (line.trim().length() == 0) {
-                    continue;
-                }
-                List<Document> documents = docMap.get(filePos);
-                if (documents == null) {
-                    documents = new ArrayList<>();
-                    docMap.put(filePos, documents);
-                }
-                documents.add(new Document(docPos + 1, line));
-
-                for (String tmp : line.split("\\W+")) {
-                    String term = tmp.toLowerCase();
-                    termPos++;
-                    // Exclude the stop words
-                    if (stopwordsList.contains(term)) {
+                while ((line = bufferedReader.readLine()) != null) {
+                    if (line.trim().length() == 0) {
                         continue;
                     }
 
-                    List<Posting> postings = indexMap.get(term);
-                    if (postings == null) {
-                        postings = new ArrayList<>();
-                        indexMap.put(term, postings);
+                    for (String tmp : line.split("\\W+")) {
+                        String term = tmp.toLowerCase();
+                        termPos++;
+                        // Exclude the stop words
+                        if (stopwordsList.contains(term)) {
+                            continue;
+                        }
+
+                        List<Posting> postings = indexMap.get(term);
+                        if (postings == null) {
+                            postings = new ArrayList<>();
+                            indexMap.put(term, postings);
+                        }
+                        postings.add(new Posting(filePos, termPos));
                     }
-                    postings.add(new Posting(filePos, termPos, docPos + 1));
                 }
-                docPos++;
+            } catch (FileNotFoundException ex) {
+                Logger.getLogger(InvertedIndex.class.getName()).log(Level.SEVERE, null, ex);
+            } catch (IOException ex) {
+                Logger.getLogger(InvertedIndex.class.getName()).log(Level.SEVERE, null, ex);
             }
-        } catch (FileNotFoundException ex) {
-            Logger.getLogger(InvertedIndex.class.getName()).log(Level.SEVERE, null, ex);
+        }
+    }
+
+    public void saveFileList() {
+        String timeLog = "list-" + new SimpleDateFormat("YYYYMMdd").format(Calendar.getInstance().getTime());
+        FileWriter fileWriter;
+        BufferedWriter bufferedWriter;
+        StringBuilder builder = new StringBuilder();
+
+        try {
+            fileWriter = new FileWriter("indexed/" + timeLog + ".txt");
+            bufferedWriter = new BufferedWriter(fileWriter);
+            for (File file : fileList) {
+                String path = file.getPath();
+
+                builder.append(path);
+                builder.append(System.lineSeparator());
+
+            }
+            bufferedWriter.write(builder.toString());
+            bufferedWriter.close();
+
         } catch (IOException ex) {
             Logger.getLogger(InvertedIndex.class.getName()).log(Level.SEVERE, null, ex);
+        } finally {
+            System.out.println("File list saved");
         }
     }
 
@@ -108,21 +127,22 @@ public class InvertedIndex {
         StringBuilder builder = new StringBuilder();
 
         try {
+            fileWriter = new FileWriter("indexed/" + timeLog + ".txt");
+            bufferedWriter = new BufferedWriter(fileWriter);
+
             for (Map.Entry<String, List<Posting>> element : indexMap.entrySet()) {
                 String term = element.getKey();
                 List<Posting> postings = element.getValue();
-                fileWriter = new FileWriter("indexed/" + timeLog + ".txt");
                 builder.append(term + "=>");
-                bufferedWriter = new BufferedWriter(fileWriter);
                 int curPos = postings.get(0).getFilePos();
-                builder.append("(" + postings.get(0).getFilePos() + ":" + postings.get(0).getTermPos() + "-" + postings.get(0).getDocPos());
+                builder.append("(" + postings.get(0).getFilePos() + ":" + postings.get(0).getTermPos());
                 if (postings.size() > 1) {
                     for (int i = 1; i < postings.size(); i++) {
                         if (postings.get(i).getFilePos() == curPos) {
-                            builder.append("," + postings.get(i).getTermPos() + "-" + postings.get(i).getDocPos());
+                            builder.append("," + postings.get(i).getTermPos());
                         } else {
                             curPos = postings.get(i).getFilePos();
-                            builder.append(")(" + curPos + ":" + postings.get(i).getTermPos() + "-" + postings.get(i).getDocPos());
+                            builder.append(")(" + curPos + ":" + postings.get(i).getTermPos());
                         }
                         if (i == postings.size() - 1) {
                             builder.append(")");
@@ -133,10 +153,10 @@ public class InvertedIndex {
                     builder.append(")");
                     builder.append(System.lineSeparator());
                 }
-                bufferedWriter.write(builder.toString());
-                bufferedWriter.close();
-
             }
+            bufferedWriter.write(builder.toString());
+            bufferedWriter.close();
+
         } catch (IOException ex) {
             Logger.getLogger(InvertedIndex.class.getName()).log(Level.SEVERE, null, ex);
         } finally {
@@ -144,7 +164,34 @@ public class InvertedIndex {
         }
     }
 
-    public String retrieveIndex(String path, int pos) {
+    public String getFilePath(String path, String prefix) {
+        File folder = new File(path);
+        File[] listOfFiles = folder.listFiles();
+
+        for (File file : listOfFiles) {
+            if (file.getName().startsWith(prefix)) {
+                return file.getPath();
+            }
+        }
+        return "";
+    }
+
+    public void readFileList() {
+        try {
+            FileReader fileReader = new FileReader(getFilePath("indexed/", "list"));
+            BufferedReader bufferedReader = new BufferedReader(fileReader);
+            String line = "";
+            while ((line = bufferedReader.readLine()) != null) {
+                fileList.add(new File(line));
+            }
+        } catch (FileNotFoundException ex) {
+            Logger.getLogger(InvertedIndex.class.getName()).log(Level.SEVERE, null, ex);
+        } catch (IOException ex) {
+            Logger.getLogger(InvertedIndex.class.getName()).log(Level.SEVERE, null, ex);
+        }
+    }
+
+    public String retrieveIndex(String path, int position) {
         File file = new File(path);
         Scanner input = null;
         int noOfLetter = 20;
@@ -155,7 +202,7 @@ public class InvertedIndex {
         }
         int count = 0;
         StringBuilder stringBuilder = new StringBuilder();
-        if (pos < noOfLetter) {
+        if (position < noOfLetter) {
             while (input.hasNext()) {
                 stringBuilder.append(input.next() + " ");
                 count++;
@@ -166,9 +213,11 @@ public class InvertedIndex {
             }
         } else {
             stringBuilder.append("...");
-            for (int i = 0; i <= pos + noOfLetter; i++) {
-                if (i >= pos - noOfLetter) {
-                    stringBuilder.append(input.next() + " ");
+            for (int i = 0; i <= position + noOfLetter; i++) {
+                if (i >= position - noOfLetter) {
+                    if (input.hasNext()) {
+                        stringBuilder.append(input.next() + " ");
+                    }
                 } else {
                     input.next();
                 }
@@ -182,15 +231,16 @@ public class InvertedIndex {
         String query = keyword.toLowerCase().split("\\W+")[0];
         StringBuilder result = new StringBuilder();
         List<Posting> postingResult = indexMap.get(query);
+
         if (postingResult != null) {
             result.append("<b style='font-size: 130%'>*** " + postingResult.size() + " results matched ***</b>");
             for (int i = 0; i < postingResult.size(); i++) {
-                List<Document> documents = docMap.get(postingResult.get(i).getFilePos());
-                String innerDoc = documents.get(postingResult.get(i).getDocPos()).getDocText();
-                String fileName = fileList.get(postingResult.get(i).getFilePos());
-                result.append("<p style='color: blue; font-size= 130%'>\"<b>" + fileName + "\"</b>, <em>Position:</em> " + postingResult.get(i).getTermPos() + ", <em>Paragraph:</em> " + (postingResult.get(i).getDocPos() + 1));
-                result.append("<div>" + innerDoc.replaceAll("(?i)(" + query + ")", "<span style='background: yellow'>$1</span>") + "</div></p>");
-                //result.append("<div>" + innerDoc.substring(i)+"</div></p>");
+                String innerDoc = retrieveIndex(fileList.get(postingResult.get(i).getFilePos()).getPath(), postingResult.get(i).getTermPos());
+                String fileName = fileList.get(postingResult.get(i).getFilePos()).getName();
+                result.append("<p style='color: blue; font-size= 130%'>\"<b>" 
+                        + "<a href='file:///"+fileList.get(postingResult.get(i).getFilePos()).getAbsolutePath()+"'>" + fileName + "</a>"
+                        + "\"</b>, <em>Position:</em> " + postingResult.get(i).getTermPos());
+                result.append("<div>" + innerDoc.replaceAll("(?i)(" + query + ")", "<b>$1</b>") + "</div></p>");
             }
             result.append("<br/>");
         } else {
@@ -224,9 +274,9 @@ public class InvertedIndex {
         return false;
     }
 
-    public void readIndex(String path) {
+    public void readIndex() {
         try {
-            FileReader fileReader = new FileReader(path);
+            FileReader fileReader = new FileReader(getFilePath("indexed/", "indexed"));
             BufferedReader bufferedReader = new BufferedReader(fileReader);
             String line = "";
             while ((line = bufferedReader.readLine()) != null) {
@@ -241,8 +291,7 @@ public class InvertedIndex {
 
                     for (int j = 0; j < postings.length; j++) {
                         String termPos = postings[j].split("-")[0];
-                        String docPos = postings[j].split("-")[0];
-                        list.add(new Posting(Integer.parseInt(filePos), Integer.parseInt(termPos), Integer.parseInt(docPos)));
+                        list.add(new Posting(Integer.parseInt(filePos), Integer.parseInt(termPos)));
                     }
                 }
                 indexMap.put(term, list);

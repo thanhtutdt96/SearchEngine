@@ -12,13 +12,11 @@ public class Posting {
 
     private int filePos;
     private int termPos;
-    private int docPos;
     private int frequency;
 
-    public Posting(int filePos, int termPos, int docPos) {
+    public Posting(int filePos, int termPos) {
         this.filePos = filePos;
         this.termPos = termPos;
-        this.docPos = docPos;
     }
 
     public int getFilePos() {
@@ -36,14 +34,4 @@ public class Posting {
     public void setTermPos(int termPos) {
         this.termPos = termPos;
     }
-
-    public int getDocPos() {
-        return docPos;
-    }
-
-    public void setDocPos(int docPos) {
-        this.docPos = docPos;
-    }
-
-
 }
