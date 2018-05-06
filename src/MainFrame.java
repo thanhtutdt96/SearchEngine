@@ -1,11 +1,12 @@
 
-import java.awt.Font;
+import java.awt.Desktop;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.io.File;
-import java.util.ArrayList;
+import java.io.IOException;
+import java.net.URISyntaxException;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -15,6 +16,8 @@ import javax.swing.JScrollPane;
 import javax.swing.JTextField;
 import javax.swing.JTextPane;
 import javax.swing.WindowConstants;
+import javax.swing.event.HyperlinkEvent;
+import javax.swing.event.HyperlinkListener;
 
 public class MainFrame {
 
@@ -50,17 +53,16 @@ public class MainFrame {
         MainFrame mainFrame = new MainFrame();
         mainFrame.frmMain.setVisible(true);
         index = InvertedIndex.getInstance();
+        List<File> fileList = index.indexFileList("res/");
 
         if (!index.isIndexed("indexed/")) {
-            List<File> fileList = index.indexFileList("res/");
-            for (int i = 0; i < fileList.size(); i++) {
-                index.buildIndex(fileList.get(i));
-            }
+            index.buildIndex(fileList);
             index.saveIndex();
+            index.saveFileList();
         } else {
-            index.readIndex("indexed/indexed-20180429.txt");
+            index.readIndex();
+            index.readFileList();
         }
-        index.retrieveIndex("res/1.txt", 50);
     }
 
     private void initialize() {
@@ -105,6 +107,22 @@ public class MainFrame {
         txtResult = new JTextPane();
         txtResult.setContentType("text/html");
         txtResult.setEditable(false);
+        txtResult.addHyperlinkListener(new HyperlinkListener() {
+            @Override
+            public void hyperlinkUpdate(HyperlinkEvent e) {
+                if (e.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
+                    if (Desktop.isDesktopSupported()) {
+                        try {
+                            Desktop.getDesktop().browse(e.getURL().toURI());
+                        } catch (URISyntaxException ex) {
+                            Logger.getLogger(MainFrame.class.getName()).log(Level.SEVERE, null, ex);
+                        } catch (IOException ex) {
+                            Logger.getLogger(MainFrame.class.getName()).log(Level.SEVERE, null, ex);
+                        }
+                    }
+                }
+            }
+        });
         scrollPane = new JScrollPane(txtResult);
         scrollPane.setBounds(TXT_RESULT_X, TXT_RESULT_Y, TXT_RESULT_WIDTH, TXT_RESULT_HEIGHT);
         frmMain.getContentPane().add(scrollPane);
