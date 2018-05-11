@@ -73,7 +73,7 @@ public class InvertedIndex {
                         continue;
                     }
 
-                    for (String tmp : line.split("\\W+")) {
+                    for (String tmp : line.split("\\s+")) {
                         String term = tmp.toLowerCase();
                         termPos++;
                         // Exclude the stop words
@@ -84,7 +84,7 @@ public class InvertedIndex {
                         List<Posting> postings = indexMap.get(term);
                         if (postings == null) {
                             postings = new ArrayList<>();
-                            indexMap.put(term, postings);
+                            indexMap.put(term.split("\\W+")[0], postings);
                         }
                         postings.add(new Posting(filePos, termPos));
                     }
@@ -209,7 +209,8 @@ public class InvertedIndex {
         int count = 0;
         int wordCount = 0;
         StringBuilder stringBuilder = new StringBuilder();
-        input.useDelimiter("\\W+");
+        
+        input.useDelimiter("\\s+");
         if (position < noOfLetter) {
             while (input.hasNext()) {
                 stringBuilder.append(input.next() + " ");
@@ -265,7 +266,7 @@ public class InvertedIndex {
         int count = 0;
         int wordCount = 0;
         StringBuilder stringBuilder = new StringBuilder();
-        input.useDelimiter("\\W+");
+        input.useDelimiter("\\s+");
         int posMin = position[0];
         int posMax = position[0];
         for (int i = 1; i < position.length; i++) {
