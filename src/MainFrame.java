@@ -132,7 +132,13 @@ public class MainFrame {
         new Thread(new Runnable() {
             @Override
             public void run() {
-                txtResult.setText(index.searchResult(txtSearch.getText().toString()));
+                String keyword = txtSearch.getText().toString();
+                String[] tokens = keyword.split("\\s+");
+                if (tokens.length > 1) {
+                    txtResult.setText(index.searchPhrase(keyword));
+                } else {
+                    txtResult.setText(index.searchResult(keyword));
+                }
             }
         }).start();
     }

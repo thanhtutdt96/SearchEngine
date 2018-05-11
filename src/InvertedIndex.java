@@ -12,6 +12,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Arrays;
 import java.util.Calendar;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Scanner;
@@ -36,7 +39,7 @@ public class InvertedIndex {
             "the", "their", "them", "then", "there", "these", "they", "this",
             "tis", "to", "too", "twas", "us", "wants", "was", "we", "were",
             "what", "when", "where", "which", "while", "who", "whom", "why",
-            "will", "with", "would", "yet", "you", "your");
+            "will", "with", "would", "yet", "you", "your", "s", "t");
 
     private HashMap<String, List<Posting>> indexMap = new HashMap<>();
     private HashMap<Integer, List<Document>> docMap = new HashMap<>();
@@ -200,12 +203,23 @@ public class InvertedIndex {
         } catch (FileNotFoundException ex) {
             Logger.getLogger(InvertedIndex.class.getName()).log(Level.SEVERE, null, ex);
         }
+//        while (input.hasNextLine()) {
+//            System.out.println(input.nextLine());
+//        }
         int count = 0;
+        int wordCount = 0;
         StringBuilder stringBuilder = new StringBuilder();
+        input.useDelimiter("\\W+");
         if (position < noOfLetter) {
             while (input.hasNext()) {
                 stringBuilder.append(input.next() + " ");
                 count++;
+                if (count == position - 1) {
+                    stringBuilder.append("<b>");
+                }
+                if (count == position) {
+                    stringBuilder.append("</b>");
+                }
                 if (count == noOfLetter) {
                     stringBuilder.append("...");
                     break;
@@ -216,13 +230,97 @@ public class InvertedIndex {
             for (int i = 0; i <= position + noOfLetter; i++) {
                 if (i >= position - noOfLetter) {
                     if (input.hasNext()) {
+                        if (i == position - 1) {
+                            stringBuilder.append("<b>");
+                        }
+                        if (i == position) {
+                            stringBuilder.append("</b>");
+                        }
                         stringBuilder.append(input.next() + " ");
                     }
                 } else {
-                    input.next();
+                    if (input.hasNext()) {
+                        input.next();
+                    }
                 }
             }
+            if (input.hasNext()) {
+                stringBuilder.append("...");
+            } else {
+                stringBuilder.append(".");
+            }
+        }
+        return stringBuilder.toString();
+    }
+
+    public String retrieveIndex(String path, int[] position) {
+        File file = new File(path);
+        Scanner input = null;
+        int noOfLetter = 20;
+        try {
+            input = new Scanner(file);
+        } catch (FileNotFoundException ex) {
+            Logger.getLogger(InvertedIndex.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        int count = 0;
+        int wordCount = 0;
+        StringBuilder stringBuilder = new StringBuilder();
+        input.useDelimiter("\\W+");
+        int posMin = position[0];
+        int posMax = position[0];
+        for (int i = 1; i < position.length; i++) {
+            if (position[i] < posMin) {
+                posMin = position[i];
+            }
+        }
+        for (int i = 1; i < position.length; i++) {
+            if (position[i] > posMax) {
+                posMax = position[i];
+            }
+        }
+        if (posMin < noOfLetter) {
+            while (input.hasNext()) {
+                stringBuilder.append(input.next() + " ");
+                count++;
+                for (int i = 0; i < position.length; i++) {
+                    if (count == position[i] - 1) {
+                        stringBuilder.append("<b>");
+                    }
+                    if (count == position[i]) {
+                        stringBuilder.append("</b>");
+                    }
+                }
+                if (count == noOfLetter) {
+                    stringBuilder.append("...");
+                    break;
+                }
+            }
+        } else {
             stringBuilder.append("...");
+            for (int i = 0; i <= posMax + noOfLetter; i++) {
+                if (i >= posMin - noOfLetter) {
+                    if (input.hasNext()) {
+                        for (int j = 0; j < position.length; j++) {
+                            if (i == position[j] - 1) {
+                                stringBuilder.append("<b>");
+                            }
+                            if (i == position[j]) {
+                                stringBuilder.append("</b>");
+                            }
+                        }
+                        stringBuilder.append(input.next() + " ");
+                    }
+                } else {
+                    if (input.hasNext()) {
+                        input.next();
+                    }
+                }
+            }
+            if (input.hasNext()) {
+                stringBuilder.append("...");
+            } else {
+                stringBuilder.append(".");
+            }
         }
         return stringBuilder.toString();
     }
@@ -237,14 +335,85 @@ public class InvertedIndex {
             for (int i = 0; i < postingResult.size(); i++) {
                 String innerDoc = retrieveIndex(fileList.get(postingResult.get(i).getFilePos()).getPath(), postingResult.get(i).getTermPos());
                 String fileName = fileList.get(postingResult.get(i).getFilePos()).getName();
-                result.append("<p style='color: blue; font-size= 130%'>\"<b>" 
-                        + "<a href='file:///"+fileList.get(postingResult.get(i).getFilePos()).getAbsolutePath()+"'>" + fileName + "</a>"
+                result.append("<p style='color: blue; font-size= 130%'>\"<b>"
+                        + "<a href='file:///" + fileList.get(postingResult.get(i).getFilePos()).getAbsolutePath() + "'>" + fileName + "</a>"
                         + "\"</b>, <em>Position:</em> " + postingResult.get(i).getTermPos());
-                result.append("<div>" + innerDoc.replaceAll("(?i)(" + query + ")", "<b>$1</b>") + "</div></p>");
+                result.append("<div>" + innerDoc + "</div></p>");
             }
             result.append("<br/>");
         } else {
             result.append("No matches found");
+        }
+        return result.toString();
+    }
+
+    public String searchPhrase(String keyword) {
+        String[] query = keyword.toLowerCase().split("\\W+");
+        StringBuilder result = new StringBuilder();
+        List<Posting>[] postingResult = new ArrayList[query.length];
+        boolean hasResult = false;
+        for (int i = 0; i < query.length; i++) {
+            postingResult[i] = indexMap.get(query[i]);
+        }
+        List<Phrase> phrase = new ArrayList<Phrase>();
+        if (postingResult.length > 1) {
+            for (int j = 0; j < postingResult.length; j++) {
+                for (int k = j + 1; k < postingResult.length; k++) {
+                    if (postingResult[j] != null && postingResult[k] != null) {
+                        for (int m = 0; m < postingResult[j].size(); m++) {
+                            for (int n = 0; n < postingResult[k].size(); n++) {
+                                if (postingResult[j].get(m).getFilePos() == postingResult[k].get(n).getFilePos()) {
+                                    Phrase temp = new Phrase();
+                                    temp.setTermPos1(postingResult[j].get(m).getTermPos());
+                                    temp.setFilePos1(postingResult[j].get(m).getFilePos());
+                                    temp.setTermPos2(postingResult[k].get(n).getTermPos());
+                                    temp.setFilePos2(postingResult[k].get(n).getFilePos());
+                                    int value = Math.abs(temp.getTermPos1() - temp.getTermPos2());
+                                    if (temp.getTermPos2() - temp.getTermPos1() == 1) {
+                                        value = 0;
+                                    }
+                                    temp.setValue(value);
+                                    if (!phrase.contains(temp) && value <= 20) {
+                                        phrase.add(temp);
+                                        hasResult = true;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            phrase.sort(Comparator.comparing(Phrase::getValue));
+            if (hasResult == true) {
+                result.append("<b style='font-size: 130%'>*** " + phrase.size() + " results matched ***</b>");
+                for (int i = 0; i < phrase.size(); i++) {
+                    String innerDoc;
+                    int[] position = new int[2];
+                    position[0] = phrase.get(i).getTermPos1();
+                    position[1] = phrase.get(i).getTermPos2();
+                    int posMin = position[0];
+                    int posMax = position[0];
+                    for (int j = 0; j < position.length; j++) {
+                        if (position[j] < posMin) {
+                            posMin = position[j];
+                        }
+                    }
+                    for (int j = 0; j < position.length; j++) {
+                        if (position[j] > posMax) {
+                            posMax = position[j];
+                        }
+                    }
+                    innerDoc = retrieveIndex(fileList.get(phrase.get(i).getFilePos1()).getPath(), position);
+                    String fileName = fileList.get(phrase.get(i).getFilePos1()).getName();
+                    result.append("<p style='color: blue; font-size= 130%'>\"<b>"
+                            + "<a href='file:///" + fileList.get(phrase.get(i).getFilePos1()).getAbsolutePath() + "'>" + fileName + "</a>"
+                            + "\"</b>, <em>Position:</em> " + posMin + " & " + posMax);
+                    result.append("<div>" + innerDoc + "</div></p>");
+                }
+                result.append("<br/>");
+            } else {
+                result.append("No matches found");
+            }
         }
         return result.toString();
     }
