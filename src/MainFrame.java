@@ -43,7 +43,7 @@ public class MainFrame {
     private static final int TXT_RESULT_WIDTH = TXT_SEARCH_WIDTH + 10 + BTN_SEARCH_WIDTH;
     private static final int TXT_RESULT_HEIGHT = MAIN_FORM_HEIGHT - 85;
 
-    public static InvertedIndex index;
+    public static Indexing index;
 
     public MainFrame() {
         initialize();
@@ -52,7 +52,7 @@ public class MainFrame {
     public static void main(String args[]) {
         MainFrame mainFrame = new MainFrame();
         mainFrame.frmMain.setVisible(true);
-        index = InvertedIndex.getInstance();
+        index = Indexing.getInstance();
         List<File> fileList = index.indexFileList("res/");
 
         if (!index.isIndexed("indexed/")) {
