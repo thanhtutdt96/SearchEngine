@@ -11,6 +11,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Arrays;
 import java.util.Calendar;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Map;
@@ -200,9 +202,7 @@ public class Indexing {
         } catch (FileNotFoundException ex) {
             Logger.getLogger(Indexing.class.getName()).log(Level.SEVERE, null, ex);
         }
-//        while (input.hasNextLine()) {
-//            System.out.println(input.nextLine());
-//        }
+
         int count = 0;
         int wordCount = 0;
         StringBuilder stringBuilder = new StringBuilder();
@@ -353,7 +353,7 @@ public class Indexing {
         for (int i = 0; i < query.length; i++) {
             postingResult[i] = indexMap.get(query[i]);
         }
-        List<Phrase> phrase = new ArrayList<Phrase>();
+        List<Phrase> phrase = new ArrayList<>();
         if (postingResult.length > 1) {
             for (int j = 0; j < postingResult.length; j++) {
                 for (int k = j + 1; k < postingResult.length; k++) {
@@ -380,7 +380,13 @@ public class Indexing {
                     }
                 }
             }
-            phrase.sort(Comparator.comparing(Phrase::getValue));
+            Collections.sort(phrase,new Comparator<Phrase>() {
+                @Override
+                public int compare(Phrase t, Phrase t1) {
+                    return t.getValue() < t1.getValue() ? -1 : t.getValue() == t1.getValue() ? 0 : 1;
+                }
+            });
+            
             if (hasResult == true) {
                 result.append("<b style='font-size: 130%'>*** " + phrase.size() + " results matched ***</b>");
                 for (int i = 0; i < phrase.size(); i++) {
