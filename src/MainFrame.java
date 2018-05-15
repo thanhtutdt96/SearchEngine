@@ -136,6 +136,7 @@ public class MainFrame {
                 String[] tokens = keyword.split("\\s+");
                 if (tokens.length > 1) {
                     txtResult.setText(index.searchPhrase(keyword));
+                    index.clearPhraseMap();
                 } else {
                     txtResult.setText(index.searchResult(keyword));
                 }

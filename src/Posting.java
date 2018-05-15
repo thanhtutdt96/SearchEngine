@@ -12,7 +12,6 @@ public class Posting {
 
     private int filePos;
     private int termPos;
-    private int frequency;
 
     public Posting(int filePos, int termPos) {
         this.filePos = filePos;
@@ -34,4 +33,22 @@ public class Posting {
     public void setTermPos(int termPos) {
         this.termPos = termPos;
     }
+
+    @Override
+    public boolean equals(Object o) {
+        boolean isEquals = false;
+
+        if (o instanceof Posting){
+            Posting pt = (Posting) o;
+            if (pt.termPos == this.termPos){
+               isEquals = true;
+            };
+        }
+
+     return isEquals;
+    }
+    
+    
 }
+
+

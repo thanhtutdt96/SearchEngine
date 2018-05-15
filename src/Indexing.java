@@ -17,6 +17,7 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Scanner;
+import java.util.TreeMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -453,6 +454,7 @@ public class Indexing {
         List<List<Posting>> postingResult = new ArrayList<>();
         boolean hasResult = false;
         int smallestPosting = Integer.MAX_VALUE;
+        List<Integer> valueList = new ArrayList<>();
         for (int i = 0; i < query.length; i++) {
             List<Posting> list = (List<Posting>) indexMap.get(query[i]);
             if (list.size() < smallestPosting) {
@@ -462,21 +464,25 @@ public class Indexing {
                 postingResult.add(list);
             }
         }
-        List<Integer> phraseResult = new ArrayList<>();
-        boolean added = false;
         List<Posting> initialList = postingResult.get(0);
         for (int i = 0; i < initialList.size(); i++) {
             int curPos = initialList.get(i).getTermPos();
+            List<Integer> phraseResult = new ArrayList<>();
+            boolean added = false;
             for (int j = 1; j < postingResult.size(); j++) {
                 for (int l = 0; l < postingResult.get(j).size(); l++) {
                     if (postingResult.get(j).get(l).getFilePos() == initialList.get(i).getFilePos()) {
-                        phraseResult.add(postingResult.get(j).get(l).getFilePos());
-                        phraseResult.add(curPos);
                         int curFilePos = postingResult.get(j).get(l).getFilePos();
+                        if (phraseResult.isEmpty()) {
+                            phraseResult.add(curFilePos);
+                            phraseResult.add(curPos);
+                        }
+                        Posting curPosting;
                         for (int k = -5; k < 6; k++) {
-                            if (postingResult.get(j).contains(new Posting(curFilePos, curPos + k))) {
-                                if (!phraseResult.contains(curPos + k)) {
-                                    phraseResult.add(curPos + k);
+                            curPosting = new Posting(curFilePos, curPos + k);
+                            if (postingResult.get(j).contains(curPosting)) {
+                                if (!phraseResult.contains(curPosting.getTermPos())) {
+                                    phraseResult.add(curPosting.getTermPos());
                                 }
                                 if (phraseResult.size() == query.length + 1) {
                                     added = true;
@@ -490,8 +496,12 @@ public class Indexing {
                     }
                 }
                 if (phraseResult.size() == query.length + 1) {
+                    if (!valueList.contains(calculateValue(phraseResult))) {
+                        valueList.add(calculateValue(phraseResult));
+                    }
                     List<Integer> phraseTmp = phraseResult;
                     List<Integer> tmpList = phraseMap.get(calculateValue(phraseResult));
+                    hasResult = true;
                     if (tmpList == null) {
                         phraseMap.put(calculateValue(phraseResult), phraseTmp);
                     } else {
@@ -501,15 +511,12 @@ public class Indexing {
                     }
                 }
             }
-            postingResult.clear();
-            added = false;
-//
-//        Collections.sort(valueList, new Comparator<Integer>() {
-//            @Override
-//            public int compare(Integer o1, Integer o2) {
-//                return o1 < o2 ? -1 : o1 == o2 ? 0 : 1;
-//            }
-//        });
+            Collections.sort(valueList, new Comparator<Integer>() {
+                @Override
+                public int compare(Integer o1, Integer o2) {
+                    return o1 < o2 ? -1 : o1 == o2 ? 0 : 1;
+                }
+            });
 //        if (hasResult == true) {
 //            result.append("<b style='font-size: 130%'>*** " + phraseMap.size() + " results matched ***</b>");
 //            for (int i = 0; i < valueList.size(); i++) {
@@ -542,9 +549,45 @@ public class Indexing {
 
 //            return result.toString();
         }
-        return "abc";
+        if (hasResult == true) {
+            result.append("<b style='font-size: 130%'>*** " + phraseMap.size() + " results matched ***</b>");
+            for (int i = 0; i < valueList.size(); i++) {
+                String innerDoc;
+                List<Integer> termsPos = phraseMap.get(valueList.get(i));
+                String fileName = fileList.get(termsPos.get(0)).getName();
+                String filePath = fileList.get(termsPos.get(0)).getPath();
+                List<Integer> finalTermsPos = new ArrayList<>();
+                for (int j = 1; j < termsPos.size(); j++) {
+                    finalTermsPos.add(termsPos.get(j));
+                }
+                innerDoc = retrieveIndex(filePath, finalTermsPos);
+                result.append("<p style='color: blue; font-size= 130%'>\"<b>"
+                        + "<a href='file:///" + fileList.get(termsPos.get(i)).getAbsolutePath() + "'>" + fileName + "</a>"
+                        + "\"</b>, <em>Position:</em> ");
+                Collections.sort(finalTermsPos, new Comparator<Integer>() {
+                    @Override
+                    public int compare(Integer o1, Integer o2) {
+                        return o1 < o2 ? -1 : o1 == o2 ? 0 : 1;
+                    }
+                });
+                for (int j = 0; j < finalTermsPos.size()-1; j++) {
+                    result.append(finalTermsPos.get(j) + " & ");
+                }
+                result.append(finalTermsPos.get(finalTermsPos.size() - 1));
+                //+ posMin + " & " + posMax);
+                result.append("<div>" + innerDoc + "</div></p>");
+            }
+            result.append("<br/>");
+        } else {
+            result.append("No matches found");
+        }
+        return result.toString();
     }
 
+    public void clearPhraseMap(){
+        phraseMap.clear();
+    }
+    
     public int calculateValue(List<Integer> posting) {
         int value = 0;
         for (int i = 1; i < posting.size() - 1; i++) {
