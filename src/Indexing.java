@@ -43,7 +43,7 @@ public class Indexing {
 
     private HashMap<String, List<Posting>> indexMap = new HashMap<>();
     private List<File> fileList = new ArrayList<>();
-    private HashMap<Integer, List<Integer>> phraseMap = new HashMap<>();
+    private HashMap<Integer, List<Postings>> phraseMap = new HashMap<>();
 
     public static Indexing getInstance() {
         if (instance == null) {
@@ -301,10 +301,10 @@ public class Indexing {
                 if (i >= posMin - noOfLetter) {
                     if (input.hasNext()) {
                         for (int j = 0; j < position.size(); j++) {
-                            if (i == position.get(i) - 1) {
+                            if (i == position.get(j) - 1) {
                                 stringBuilder.append("<b>");
                             }
-                            if (i == position.get(i)) {
+                            if (i == position.get(j)) {
                                 stringBuilder.append("</b>");
                             }
                         }
@@ -346,108 +346,7 @@ public class Indexing {
         }
         return result.toString();
     }
-
-//    public String searchPhrase(String keyword) {
-//        String[] query = keyword.toLowerCase().split("\\W+");
-//        StringBuilder result = new StringBuilder();
-//        List<Posting>[] postingResult = new ArrayList[query.length];
-//        boolean hasResult = false;
-//        for (int i = 0; i < query.length; i++) {
-//            postingResult[i] = indexMap.get(query[i]);
-//        }
-//        List<Phrase> phrase = new ArrayList<>();
-//        if (postingResult.length > 1) {
-//            for (int j = 0; j < postingResult.length; j++) {
-//                for (int k = j + 1; k < postingResult.length; k++) {
-//                    if (postingResult[j] != null && postingResult[k] != null) {
-//                        for (int m = 0; m < postingResult[j].size(); m++) {
-//                            for (int n = 0; n < postingResult[k].size(); n++) {
-//                                if (postingResult[j].get(m).getFilePos() == postingResult[k].get(n).getFilePos()) {
-//                                    Phrase temp = new Phrase();
-//                                    temp.setTermPos1(postingResult[j].get(m).getTermPos());
-//                                    temp.setFilePos(postingResult[j].get(m).getFilePos());
-//                                    temp.setTermPos2(postingResult[k].get(n).getTermPos());
-//                                    int value = Math.abs(temp.getTermPos1() - temp.getTermPos2());
-//                                    if (temp.getTermPos2() - temp.getTermPos1() == 1) {
-//                                        value = 0;
-//                                    }
-//                                    temp.setValue(value);
-//                                    if (!phrase.contains(temp) && value <= 20) {
-//                                        phrase.add(temp);
-//                                        hasResult = true;
-//                                    }
-//                                }
-//                            }
-//                        }
-//                    }
-//                }
-//            }
-//            Collections.sort(phrase, new Comparator<Phrase>() {
-//                @Override
-//                public int compare(Phrase t, Phrase t1) {
-//                    return t.getValue() < t1.getValue() ? -1 : t.getValue() == t1.getValue() ? 0 : 1;
-//                }
-//            });
-//
-//            if (hasResult == true) {
-//                result.append("<b style='font-size: 130%'>*** " + phrase.size() + " results matched ***</b>");
-//                for (int i = 0; i < phrase.size(); i++) {
-//                    String innerDoc;
-//                    int[] position = new int[2];
-//                    position[0] = phrase.get(i).getTermPos1();
-//                    position[1] = phrase.get(i).getTermPos2();
-//                    int posMin = position[0];
-//                    int posMax = position[0];
-//                    for (int j = 0; j < position.length; j++) {
-//                        if (position[j] < posMin) {
-//                            posMin = position[j];
-//                        }
-//                    }
-//                    for (int j = 0; j < position.length; j++) {
-//                        if (position[j] > posMax) {
-//                            posMax = position[j];
-//                        }
-//                    }
-//                    innerDoc = retrieveIndex(fileList.get(phrase.get(i).getFilePos()).getPath(), position);
-//                    String fileName = fileList.get(phrase.get(i).getFilePos()).getName();
-//                    result.append("<p style='color: blue; font-size= 130%'>\"<b>"
-//                            + "<a href='file:///" + fileList.get(phrase.get(i).getFilePos()).getAbsolutePath() + "'>" + fileName + "</a>"
-//                            + "\"</b>, <em>Position:</em> " + posMin + " & " + posMax);
-//                    result.append("<div>" + innerDoc + "</div></p>");
-//                }
-//                result.append("<br/>");
-//            } else {
-//                result.append("No matches found");
-//            }
-//        }
-//        return result.toString();
-//    }
-    //        List<Integer> valueList = new ArrayList<>();
-//        List<Integer> posting = new ArrayList<>();
-//        if (postingResult.length > 1) {
-//            for (int j = 0; j < postingResult.length; j++) {
-//                for (int k = j + 1; k < postingResult.length; k++) {
-//                    if (postingResult[j] != null && postingResult[k] != null) {
-//                        for (int m = 0; m < postingResult[j].size(); m++) {
-//                            for (int n = 0; n < postingResult[k].size(); n++) {
-//                                if (postingResult[j].get(m).getFilePos() == postingResult[k].get(n).getFilePos()) {
-//                                    if (posting.isEmpty()) {
-//                                        posting.add(postingResult[j].get(m).getFilePos());
-//                                    }
-//                                    if (!posting.contains(postingResult[j].get(m).getTermPos())) {
-//                                        posting.add(j, postingResult[j].get(m).getTermPos());
-//                                    }
-//                                    if (!posting.contains(postingResult[k].get(n).getTermPos())) {
-//                                        posting.add(j, postingResult[k].get(n).getTermPos());
-//                                    }
-//                                }
-//                            }
-//                        }
-//                    }
-//                }
-//                valueList.add(calculateValue(posting));
-//                phraseMap.put(calculateValue(posting), posting);
-//            }
+    
     public String searchPhrase(String keyword) {
         String[] query = keyword.toLowerCase().split("\\W+");
         StringBuilder result = new StringBuilder();
@@ -467,115 +366,79 @@ public class Indexing {
         List<Posting> initialList = postingResult.get(0);
         for (int i = 0; i < initialList.size(); i++) {
             int curPos = initialList.get(i).getTermPos();
-            List<Integer> phraseResult = new ArrayList<>();
+            Postings phraseResult = new Postings(-1, new ArrayList<>());
             boolean added = false;
             for (int j = 1; j < postingResult.size(); j++) {
-                for (int l = 0; l < postingResult.get(j).size(); l++) {
-                    if (postingResult.get(j).get(l).getFilePos() == initialList.get(i).getFilePos()) {
-                        int curFilePos = postingResult.get(j).get(l).getFilePos();
-                        if (phraseResult.isEmpty()) {
-                            phraseResult.add(curFilePos);
-                            phraseResult.add(curPos);
-                        }
-                        Posting curPosting;
-                        for (int k = -5; k < 6; k++) {
-                            curPosting = new Posting(curFilePos, curPos + k);
-                            if (postingResult.get(j).contains(curPosting)) {
-                                if (!phraseResult.contains(curPosting.getTermPos())) {
-                                    phraseResult.add(curPosting.getTermPos());
-                                }
-                                if (phraseResult.size() == query.length + 1) {
-                                    added = true;
-                                }
-                                break;
+                int curFilePos = initialList.get(i).getFilePos();
+                if (phraseResult.getFilePos() == -1) {
+                    phraseResult.setFilePos(curFilePos);
+                    phraseResult.add(curPos);
+                }
+                Posting curPosting;
+                for (int k = -5; k < 6; k++) {
+                    curPosting = new Posting(curFilePos, curPos + k);
+                    if (postingResult.get(j).contains(curPosting)) {
+                        if (!phraseResult.getTermPos().contains(curPosting.getTermPos())) {
+                            phraseResult.add(curPosting.getTermPos());
+                            if (phraseResult.getTermPos().size() == query.length) {
+                                added = true;
                             }
                         }
-                    }
-                    if (added == true) {
                         break;
                     }
                 }
-                if (phraseResult.size() == query.length + 1) {
-                    if (!valueList.contains(calculateValue(phraseResult))) {
-                        valueList.add(calculateValue(phraseResult));
+                if (added) {
+                    int value = calculateValue(phraseResult.getTermPos());
+                    if (!valueList.contains(value)) {
+                        valueList.add(value);
                     }
-                    List<Integer> phraseTmp = phraseResult;
-                    List<Integer> tmpList = phraseMap.get(calculateValue(phraseResult));
+                    List<Postings> phraseTmp = new ArrayList<>();
+                    phraseTmp.add(phraseResult);
+                    List<Postings> tmpList = phraseMap.get(value);
                     hasResult = true;
                     if (tmpList == null) {
-                        phraseMap.put(calculateValue(phraseResult), phraseTmp);
+                        phraseMap.put(value, phraseTmp);
                     } else {
-                        for (int m = 0; m <= query.length; m++) {
-                            tmpList.add(phraseResult.get(m));
-                        }
+                        tmpList.add(phraseResult);
                     }
                 }
             }
-            Collections.sort(valueList, new Comparator<Integer>() {
-                @Override
-                public int compare(Integer o1, Integer o2) {
-                    return o1 < o2 ? -1 : o1 == o2 ? 0 : 1;
-                }
-            });
-//        if (hasResult == true) {
-//            result.append("<b style='font-size: 130%'>*** " + phraseMap.size() + " results matched ***</b>");
-//            for (int i = 0; i < valueList.size(); i++) {
-//                String innerDoc;
-//                List<Integer> termsPos = phraseMap.get(valueList.get(i));
-//                int posMin = termsPos.get(0);
-//                int posMax = termsPos.get(0);
-//                for (int j = 0; j < termsPos.size(); j++) {
-//                    if (termsPos.get(j) < posMin) {
-//                        posMin = termsPos.get(j);
-//                    }
-//                }
-//                for (int j = 0; j < termsPos.size(); j++) {
-//                    if (termsPos.get(j) > posMax) {
-//                        posMax = termsPos.get(j);
-//                    }
-//                }
-//                innerDoc = retrieveIndex(fileList.get(termsPos.get(0)).getPath(), termsPos);
-//                String fileName = fileList.get(termsPos.get(0)).getName();
-//                result.append("<p style='color: blue; font-size= 130%'>\"<b>"
-//                        + "<a href='file:///" + fileList.get(termsPos.get(i)).getAbsolutePath() + "'>" + fileName + "</a>"
-//                        + "\"</b>, <em>Position:</em> " + posMin + " & " + posMax);
-//                result.append("<div>" + innerDoc + "</div></p>");
-//            }
-//            result.append("<br/>");
-//        } else {
-//            result.append("No matches found");
-//        }
-//    }
-
-//            return result.toString();
         }
+        Collections.sort(valueList, new Comparator<Integer>() {
+            @Override
+            public int compare(Integer o1, Integer o2) {
+                return o1 < o2 ? -1 : o1 == o2 ? 0 : 1;
+            }
+        });
         if (hasResult == true) {
-            result.append("<b style='font-size: 130%'>*** " + phraseMap.size() + " results matched ***</b>");
+            int noOfResults = 0;
+            for (int i = 0; i < valueList.size(); i++) {
+                noOfResults += phraseMap.get(valueList.get(i)).size();
+            }
+            result.append("<b style='font-size: 130%'>*** " + noOfResults + " results matched ***</b>");
             for (int i = 0; i < valueList.size(); i++) {
                 String innerDoc;
-                List<Integer> termsPos = phraseMap.get(valueList.get(i));
-                String fileName = fileList.get(termsPos.get(0)).getName();
-                String filePath = fileList.get(termsPos.get(0)).getPath();
-                List<Integer> finalTermsPos = new ArrayList<>();
-                for (int j = 1; j < termsPos.size(); j++) {
-                    finalTermsPos.add(termsPos.get(j));
-                }
-                innerDoc = retrieveIndex(filePath, finalTermsPos);
-                result.append("<p style='color: blue; font-size= 130%'>\"<b>"
-                        + "<a href='file:///" + fileList.get(termsPos.get(i)).getAbsolutePath() + "'>" + fileName + "</a>"
-                        + "\"</b>, <em>Position:</em> ");
-                Collections.sort(finalTermsPos, new Comparator<Integer>() {
-                    @Override
-                    public int compare(Integer o1, Integer o2) {
-                        return o1 < o2 ? -1 : o1 == o2 ? 0 : 1;
+                List<Postings> termsPos = phraseMap.get(valueList.get(i));
+                for (int j = 0; j < termsPos.size(); j++) {
+                    String fileName = fileList.get(termsPos.get(j).getFilePos()).getName();
+                    String filePath = fileList.get(termsPos.get(j).getFilePos()).getPath();
+                    innerDoc = retrieveIndex(filePath, termsPos.get(j).getTermPos());
+                    result.append("<p style='color: blue; font-size= 130%'>\"<b>"
+                            + "<a href='file:///" + fileList.get(termsPos.get(j).getFilePos()).getAbsolutePath() + "'>" + fileName + "</a>"
+                            + "\"</b>, <em>Position:</em> ");
+                    Collections.sort(termsPos.get(j).getTermPos(), new Comparator<Integer>() {
+                        @Override
+                        public int compare(Integer o1, Integer o2) {
+                            return o1 < o2 ? -1 : o1 == o2 ? 0 : 1;
+                        }
+                    });
+                    for (int k = 0; k < termsPos.get(j).getTermPos().size() - 1; k++) {
+                        result.append(termsPos.get(j).getTermPos().get(k) + " & ");
                     }
-                });
-                for (int j = 0; j < finalTermsPos.size()-1; j++) {
-                    result.append(finalTermsPos.get(j) + " & ");
+                    result.append(termsPos.get(j).getTermPos().get(termsPos.get(j).getTermPos().size() - 1));
+                    //+ posMin + " & " + posMax);
+                    result.append("<div>" + innerDoc + "</div></p>");
                 }
-                result.append(finalTermsPos.get(finalTermsPos.size() - 1));
-                //+ posMin + " & " + posMax);
-                result.append("<div>" + innerDoc + "</div></p>");
             }
             result.append("<br/>");
         } else {
@@ -584,10 +447,10 @@ public class Indexing {
         return result.toString();
     }
 
-    public void clearPhraseMap(){
+    public void clearPhraseMap() {
         phraseMap.clear();
     }
-    
+
     public int calculateValue(List<Integer> posting) {
         int value = 0;
         for (int i = 1; i < posting.size() - 1; i++) {

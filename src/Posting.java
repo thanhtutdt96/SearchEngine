@@ -1,13 +1,4 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 
-/**
- *
- * @author tu.phamthanh
- */
 public class Posting {
 
     private int filePos;
@@ -40,7 +31,7 @@ public class Posting {
 
         if (o instanceof Posting){
             Posting pt = (Posting) o;
-            if (pt.termPos == this.termPos){
+            if (pt.termPos == this.termPos && pt.filePos == this.filePos){
                isEquals = true;
             };
         }
