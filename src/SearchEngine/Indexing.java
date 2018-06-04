@@ -1,3 +1,4 @@
+package SearchEngine;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
@@ -22,10 +23,10 @@ import java.util.prefs.Preferences;
 public class Indexing {
 
     private static Indexing instance = null;
-
+    private Parser parser = null;
     private String newline = System.getProperty("line.separator");
-    
-    private List<String> excludeList = Arrays.asList("<<", "<", "»","");
+
+    private List<String> excludeList = Arrays.asList("<<",">>", ">", "<", "»", "/t>><<c", "<<a", "<<t", " » ", "");
 
     private HashMap<String, List<Posting>> indexMap;
     private List<File> fileList;
@@ -57,6 +58,7 @@ public class Indexing {
 
     public void buildIndex(List<File> files) {
         indexMap = new HashMap<>();
+        parser = Parser.getInstance();
         for (int i = 0; i < files.size(); i++) {
             int termPos = 0;
             int filePos = fileList.indexOf(files.get(i));
@@ -75,22 +77,43 @@ public class Indexing {
                 while ((line = bufferedReader.readLine()) != null) {
                     byte byteArray[] = line.getBytes();
                     line = new String(byteArray, "UTF-8");
-
+                    
                     if (line.trim().length() == 0) {
                         continue;
                     }
+                    if (parser.checkComment(line)) {
+                        continue;
+                    }
+                    line=line.replaceAll("(<<\\w)|(\\w>>)", " ");
+                    line=line.replaceAll("[^\\p{L}\\s\\d]", " ");
+                    for (String tmp : parser.removeSpace(line)) {
 
-                    for (String tmp : line.split("[^a-zA-Z0-9'\\p{L}]+")) {
-                        String termTemp = tmp.toLowerCase().trim();
-                        termPos++;
-                        
-//                        String term = termTemp.split("\\W+")[0];                        
-                        String term = termTemp;
-
-                        // Exclude the stop words
-                        if (excludeList.contains(term)) {
+//                        String termTemp = tmp.toLowerCase().trim();
+//String tmp : line.split("[^a-zA-Z0-9'\\p{L}]+"
+//                        String term = termTemp.split("\\W+")[0];  
+//                        if (excludeList.contains(tmp)) {
+//                            continue;
+//                        }
+//                        for (int j = 0; j < excludeList.size(); j++) {
+//                            if (tmp.contains(excludeList.get(j))) {
+//                                continue;
+//                            }
+//                        }
+                        if (excludeList.contains(tmp)) {
                             continue;
                         }
+                        if (parser.checkRedundant(tmp)) {
+                            continue;
+                        }
+                        System.out.println(tmp);
+                        String term = parser.removeRedundantCharacters(tmp.toLowerCase());
+
+                        // Exclude the stop words
+//                        if (excludeList.contains(term)) {
+//                            continue;
+//                        }
+                        termPos++;
+
                         List<Posting> postings = indexMap.get(term);
                         if (postings == null) {
                             postings = new ArrayList<>();

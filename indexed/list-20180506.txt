@@ -1,4 +1,0 @@
-res\1.txt
-res\2.txt
-res\3.txt
-res\4.txt

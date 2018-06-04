@@ -1,3 +1,5 @@
+package SearchEngine;
+
 
 public class Posting {
 
