@@ -8,7 +8,6 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
-import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.io.File;
 import java.io.IOException;
@@ -16,6 +15,7 @@ import java.net.URISyntaxException;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import javax.swing.Icon;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JFileChooser;
@@ -106,13 +106,13 @@ public class MainFrame {
             index.readFileList();
         }
 
-        mainFrame.frmMain.addWindowListener(new WindowAdapter() {
-            @Override
-            public void windowClosing(WindowEvent we) {
-                index.clearIndexedFolder("indexed/");
-            }
-
-        });
+//        mainFrame.frmMain.addWindowListener(new WindowAdapter() {
+//            @Override
+//            public void windowClosing(WindowEvent we) {
+//                index.clearIndexedFolder("indexed/");
+//            }
+//
+//        });
     }
 
     private void initialize() {
@@ -134,8 +134,7 @@ public class MainFrame {
         lblSearchText.setBounds(LBL_SEARCH_TEXT_X, LBL_SEARCH_TEXT_Y, LBL_SEARCH_TEXT_WIDTH, LBL_SEARCH_TEXT_HEIGHT);
         frmMain.getContentPane().add(lblSearchText);
 
-//        btnSearch = new JButton(new ImageIcon(getClass().getResource("search-2.png")));
-        btnSearch = new JButton("ABC");
+        btnSearch = new JButton(new ImageIcon(this.getClass().getResource("/Image/Search.png")));
 
         btnSearch.setBounds(BTN_SEARCH_X, BTN_SEARCH_Y, BTN_SEARCH_WIDTH, BTN_SEARCH_HEIGHT);
         frmMain.getContentPane().add(btnSearch);
@@ -161,9 +160,8 @@ public class MainFrame {
             public void keyReleased(KeyEvent ke) {
             }
         });
-//        btnBrowse = new JButton(new ImageIcon(getClass().getResource("folder_open-2.png")));
-        btnBrowse = new JButton("BCD");
-
+        
+        btnBrowse = new JButton(new ImageIcon(getClass().getResource("/Image/Browse.png")));
         btnBrowse.setBounds(BTN_BROWSE_X, BTN_BROWSE_Y, BTN_BROWSE_WIDTH, BTN_BROWSE_HEIGHT);
         frmMain.getContentPane().add(btnBrowse);
         btnBrowse.addActionListener(new ActionListener() {
@@ -190,9 +188,7 @@ public class MainFrame {
             }
         });
 
-//        btnClear = new JButton(new ImageIcon(getClass().getResource("recycle_bin_empty-2.png")));
-        btnClear = new JButton("EFG");
-
+        btnClear = new JButton(new ImageIcon(getClass().getResource("/Image/Clear.png")));
         btnClear.setBounds(BTN_CLEAR_X, BTN_CLEAR_Y, BTN_CLEAR_WIDTH, BTN_CLEAR_HEIGHT);
         frmMain.getContentPane().add(btnClear);
 
