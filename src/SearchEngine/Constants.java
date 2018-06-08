@@ -16,6 +16,6 @@ public class Constants {
     public static final String REMOVE_SPACE_REGEX = "\\s+";
 //    public static final String REMOVE_REDUNDANT_CHAR_REGEX="[^a-zA-Z0-9'.,;:[...]&!\"ăâđêôơưĂÂĐÊÔƠƯ\\p{L}]+";
 //    public static final String REMOVE_REDUNDANT_CHAR_REGEX = "\\W+ăâđêôơưĂÂĐÊÔƠƯ[\\p{Punct}&&[^']]";
-public static final String REMOVE_REDUNDANT_CHAR_REGEX="[^\\p{L}\\s\\d-.]";
+    public static final String REMOVE_REDUNDANT_CHAR_REGEX = "[^\\p{L}\\s\\d]";
     public static final String REMOVE_COMMENT_REGEX = "<!--.*-->";
 }

@@ -38,14 +38,6 @@ public class Indexing {
         }
         return instance;
     }
-
-    public void convertFileToUTF8(List<File> file) {
-//        for(int i=0; i<file.size(); i++){
-//      con      String charset="UTF-8";
-//            FileReader fileReader=new FileReader(file);
-//        }
-    }
-
     public void clearIndexedFolder(String path) {
         File folder = new File(path);
         File files[] = folder.listFiles();
@@ -108,10 +100,6 @@ public class Indexing {
                         System.out.println(tmp);
                         String term = parser.removeRedundantCharacters(tmp.toLowerCase());
 
-                        // Exclude the stop words
-//                        if (excludeList.contains(term)) {
-//                            continue;
-//                        }
                         termPos++;
 
                         List<Posting> postings = indexMap.get(term);
