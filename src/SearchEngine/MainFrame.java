@@ -8,6 +8,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
+import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.io.File;
 import java.io.IOException;
@@ -41,6 +42,8 @@ public class MainFrame {
     private JLabel lblSearchText;
     private JLabel lblPath;
     private JLabel lblResult;
+    long timeStart;
+    long timeEnd;
 
     /* Dimension values */
     private static final int MAIN_FORM_WIDTH = 535;
@@ -95,24 +98,28 @@ public class MainFrame {
     public static void main(String args[]) {
         MainFrame mainFrame = new MainFrame();
         mainFrame.frmMain.setVisible(true);
+        mainFrame.timeStart = System.currentTimeMillis();
         List<File> fileList = index.indexFileList("res/");
 
         if (!index.isIndexed("indexed/")) {
             index.buildIndex(fileList);
-            index.saveIndex();
+//            index.saveIndex();
             index.saveFileList();
         } else {
             index.readIndex();
             index.readFileList();
         }
+        mainFrame.timeEnd = System.currentTimeMillis();
+        System.out.println("Running time: "+(mainFrame.timeEnd - mainFrame.timeStart) / 1000);
 
-//        mainFrame.frmMain.addWindowListener(new WindowAdapter() {
-//            @Override
-//            public void windowClosing(WindowEvent we) {
-//                index.clearIndexedFolder("indexed/");
-//            }
-//
-//        });
+        mainFrame.frmMain.addWindowListener(new WindowAdapter() {
+            @Override
+            public void windowClosing(WindowEvent we) {
+                index.clearIndexedFolder("indexed/");
+            }
+
+        });
+
     }
 
     private void initialize() {
@@ -160,7 +167,7 @@ public class MainFrame {
             public void keyReleased(KeyEvent ke) {
             }
         });
-        
+
         btnBrowse = new JButton(new ImageIcon(getClass().getResource("/Image/Browse.png")));
         btnBrowse.setBounds(BTN_BROWSE_X, BTN_BROWSE_Y, BTN_BROWSE_WIDTH, BTN_BROWSE_HEIGHT);
         frmMain.getContentPane().add(btnBrowse);
