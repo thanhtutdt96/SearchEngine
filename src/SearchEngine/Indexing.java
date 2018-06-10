@@ -1,5 +1,8 @@
 package SearchEngine;
 
+import Tokenizer.Parser;
+import Constant.Constants;
+import static SearchEngine.MainFrame.helper;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
@@ -16,9 +19,12 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Scanner;
+import java.util.TreeMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.prefs.Preferences;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class Indexing {
 
@@ -26,7 +32,7 @@ public class Indexing {
     private Parser parser = null;
     private String newline = System.getProperty("line.separator");
 
-    private List<String> excludeList = Arrays.asList("<<",">>", ">", "<", "»", "/t>><<c", "<<a", "<<t", " » ", "");
+    private List<String> excludeList = Arrays.asList("<<", ">>", ">", "<", "»", "/t>><<c", "<<a", "<<t", " » ", "");
 
     private HashMap<String, List<Posting>> indexMap;
     private List<File> fileList;
@@ -38,6 +44,7 @@ public class Indexing {
         }
         return instance;
     }
+
     public void clearIndexedFolder(String path) {
         File folder = new File(path);
         File files[] = folder.listFiles();
@@ -49,9 +56,12 @@ public class Indexing {
     }
 
     public void buildIndex(List<File> files) {
-        indexMap = new HashMap<>();
         parser = Parser.getInstance();
+        indexMap = new HashMap<>();
+
         for (int i = 0; i < files.size(); i++) {
+            indexMap.clear();
+            String filePath = files.get(i).getAbsolutePath();
             int termPos = 0;
             int filePos = fileList.indexOf(files.get(i));
             // Check if the file was indexed or not
@@ -60,62 +70,57 @@ public class Indexing {
                 filePos = fileList.size() - 1;
             }
 
-            try {
-                // Read input file
-                FileReader fileReader = new FileReader(files.get(i));
-                BufferedReader bufferedReader = new BufferedReader(fileReader);
-                String line = "";
+            // Read input file
+            helper = Helper.getInstance();
+            String[] line = helper.readFileByExtenstions(filePath);
+            for (int j = 0; j < line.length; j++) {
+                byte byteArray[] = line[j].getBytes();
+//                    line = new String(byteArray, "UTF-8");
 
-                while ((line = bufferedReader.readLine()) != null) {
-                    byte byteArray[] = line.getBytes();
-                    line = new String(byteArray, "UTF-8");
-                    
-                    if (line.trim().length() == 0) {
+                if (line[j].trim().length() == 0) {
+                    continue;
+                }
+                if (parser.checkComment(line[j])) {
+                    continue;
+                }
+                line[j] = line[j].replaceAll("(<<\\w)|(\\w>>)", " ");
+                line[j] = line[j].replaceAll("[^\\p{L}\\s\\d]", " ");
+                for (String tmp : parser.removeSpace(line[j])) {
+
+                    if (excludeList.contains(tmp)) {
                         continue;
                     }
-                    if (parser.checkComment(line)) {
+                    if (parser.checkRedundant(tmp)) {
                         continue;
                     }
-                    line=line.replaceAll("(<<\\w)|(\\w>>)", " ");
-                    line=line.replaceAll("[^\\p{L}\\s\\d]", " ");
-                    for (String tmp : parser.removeSpace(line)) {
+                    System.out.println(tmp);
+                    String term = parser.removeRedundantCharacters(tmp.toLowerCase());
 
-//                        String termTemp = tmp.toLowerCase().trim();
-//String tmp : line.split("[^a-zA-Z0-9'\\p{L}]+"
-//                        String term = termTemp.split("\\W+")[0];  
-//                        if (excludeList.contains(tmp)) {
-//                            continue;
-//                        }
-//                        for (int j = 0; j < excludeList.size(); j++) {
-//                            if (tmp.contains(excludeList.get(j))) {
-//                                continue;
-//                            }
-//                        }
-                        if (excludeList.contains(tmp)) {
-                            continue;
-                        }
-                        if (parser.checkRedundant(tmp)) {
-                            continue;
-                        }
-                        System.out.println(tmp);
-                        String term = parser.removeRedundantCharacters(tmp.toLowerCase());
+                    termPos++;
 
-                        termPos++;
-
-                        List<Posting> postings = indexMap.get(term);
-                        if (postings == null) {
-                            postings = new ArrayList<>();
-                            indexMap.put(term, postings);
-                        }
+                    List<Posting> postings = indexMap.get(term);
+                    if (postings == null) {
+                        postings = new ArrayList<>();
+                        indexMap.put(term, postings);
+                    }
+                    if (helper.checkExcelExtention(filePath)) {
+                    postings.add(new Posting(filePos, helper.getSheetByIndex(j)));
+                    } else {
                         postings.add(new Posting(filePos, termPos));
                     }
                 }
-            } catch (FileNotFoundException ex) {
-                Logger.getLogger(Indexing.class.getName()).log(Level.SEVERE, null, ex);
-            } catch (IOException ex) {
-                Logger.getLogger(Indexing.class.getName()).log(Level.SEVERE, null, ex);
             }
+            //                bufferedReader.close();
+//                fileReader.close();
+            sortIndex();
+            saveIndex();
         }
+    }
+
+    public void sortIndex() {
+        Map<String, List<Posting>> map;
+        map = new TreeMap<>(indexMap);
+//        indexMap.
     }
 
     public void saveFileList() {
@@ -146,16 +151,16 @@ public class Indexing {
 
     public void saveIndex() {
 //        String timeLog = "indexed-" + new SimpleDateFormat("YYYYMMdd").format(Calendar.getInstance().getTime());
-        FileWriter fileWriter;
-        BufferedWriter bufferedWriter;
-        StringBuilder builder = new StringBuilder();
+        FileWriter fileWriter = null;
+        BufferedWriter bufferedWriter = null;
 
         try {
-            fileWriter = new FileWriter("indexed/index.txt");
-            bufferedWriter = new BufferedWriter(fileWriter);
 
             for (Map.Entry<String, List<Posting>> element : indexMap.entrySet()) {
+                StringBuilder builder = new StringBuilder();
                 String term = element.getKey();
+                fileWriter = new FileWriter("indexed/" + "indexed.txt", true);
+                bufferedWriter = new BufferedWriter(fileWriter);
                 List<Posting> postings = element.getValue();
                 builder.append(term + "=>");
                 int curPos = postings.get(0).getFilePos();
@@ -177,15 +182,59 @@ public class Indexing {
                     builder.append(")");
                     builder.append(System.lineSeparator());
                 }
+                bufferedWriter.write(builder.toString());
+                bufferedWriter.close();
+
             }
-            bufferedWriter.write(builder.toString());
-            bufferedWriter.close();
+//            bufferedWriter.close();
+//            fileWriter.close();
 
         } catch (IOException ex) {
             Logger.getLogger(Indexing.class.getName()).log(Level.SEVERE, null, ex);
         } finally {
             System.out.println("Index saved");
         }
+    }
+
+    private String checkDistributionRange(String term) {
+        // áàảãạăắặằẳẵâấầẩẫậđéèẻẽẹêếềểễệíìỉĩịóòỏõọôốồổỗộơớờởỡợúùủũụưứừửữựýỳỷỹỵÁÀẢÃẠĂẶẰẲẴÂẤẦẨẪẬĐÉÈẺẼẸÊẾỀỂỄỆÍÌỈĨỊÓÒỎÕỌÔỐỒỔỖỘƠỚỜỞỠỢÚÙỦŨỤƯỨỪỬỮỰÝỲỶỸỴ
+
+        Pattern pattern = Pattern.compile("^[aáàảãạăắặằẳẵâấầẩẫậbcdđAÁÀẢÃẠĂẶẰẲẴÂẤẦẨẪBCD]");
+        Matcher m = pattern.matcher(term);
+        if (m.find()) {
+            return "a-d";
+        }
+        pattern = Pattern.compile("^[eéèẻẽẹêếềểễệfghEÉÈẺẼẸÊẾỀỂỄỆFGH]");
+        m = pattern.matcher(term);
+        if (m.find()) {
+            return "e-h";
+        }
+        pattern = Pattern.compile("^[iíìỉĩịjklIÍÌỈĨỊJKL]");
+        m = pattern.matcher(term);
+        if (m.find()) {
+            return "i-l";
+        }
+        pattern = Pattern.compile("^[mnoóòỏõọôốồổỗộơớờởỡợpMNOÓÒỎÕỌÔỐỒỔỖỘƠỚỜỞỠỢ]");
+        m = pattern.matcher(term);
+        if (m.find()) {
+            return "m-p";
+        }
+        pattern = Pattern.compile("^[qrstQRST]");
+        m = pattern.matcher(term);
+        if (m.find()) {
+            return "q-t";
+        }
+        pattern = Pattern.compile("^[uúùủũụưứừửữựvwUÚÙỦŨỤƯỨỪỬỮỰVW]");
+        m = pattern.matcher(term);
+        if (m.find()) {
+            return "u-w";
+        }
+        pattern = Pattern.compile("^[xyýỳỷỹỵzXYÝỲỶỸỴZ]");
+        m = pattern.matcher(term);
+        if (m.find()) {
+            return "x-z";
+        }
+        return "other";
     }
 
     public String getFilePath(String path, String prefix) {
@@ -504,7 +553,7 @@ public class Indexing {
         File[] listOfFiles = folder.listFiles();
 
         for (File file : listOfFiles) {
-            if (file.isFile() && file.getName().endsWith(".txt")) {
+            if (file.isFile()) {
                 fileList.add(file);
             }
         }
