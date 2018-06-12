@@ -16,7 +16,6 @@ import java.net.URISyntaxException;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import javax.swing.Icon;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JFileChooser;
@@ -28,6 +27,7 @@ import javax.swing.JTextPane;
 import javax.swing.WindowConstants;
 import javax.swing.event.HyperlinkEvent;
 import javax.swing.event.HyperlinkListener;
+import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
 
 public class MainFrame {
 
@@ -90,6 +90,7 @@ public class MainFrame {
     private static final int TXT_RESULT_HEIGHT = MAIN_FORM_HEIGHT - 215;
 
     public static Indexing index;
+    public static Helper helper;
 
     public MainFrame() {
         initialize();
@@ -103,22 +104,27 @@ public class MainFrame {
 
         if (!index.isIndexed("indexed/")) {
             index.buildIndex(fileList);
-//            index.saveIndex();
             index.saveFileList();
-        } else {
-            index.readIndex();
-            index.readFileList();
         }
+//        } else {
+//            index.readIndex();
+//            index.readFileList();
+//        }
         mainFrame.timeEnd = System.currentTimeMillis();
-        System.out.println("Running time: "+(mainFrame.timeEnd - mainFrame.timeStart) / 1000);
+        System.out.println("Running time: " + (mainFrame.timeEnd - mainFrame.timeStart) / 1000);
 
-        mainFrame.frmMain.addWindowListener(new WindowAdapter() {
-            @Override
-            public void windowClosing(WindowEvent we) {
-                index.clearIndexedFolder("indexed/");
-            }
-
-        });
+//        mainFrame.frmMain.addWindowListener(new WindowAdapter() {
+//            @Override
+//            public void windowClosed(WindowEvent we) {
+//                index.clearIndexedFolder("indexed/");
+//            }
+//           
+//        });
+//        helper = Helper.getInstance();
+//        String[] list=helper.readExcelFile("res/test.xlsx");
+//        for(int i=0; i<list.length;i++){
+//            System.out.println(list[i]);
+//        }
 
     }
 
@@ -240,12 +246,13 @@ public class MainFrame {
             @Override
             public void run() {
                 String keyword = txtSearch.getText().toString();
-                String[] tokens = keyword.split("\\s+");
-                if (tokens.length > 1) {
-                    txtResult.setText(index.searchPhrase(keyword));
-                } else {
-                    txtResult.setText(index.searchOne(keyword));
-                }
+//                String[] tokens = keyword.split("\\s+");
+//                if (tokens.length > 1) {
+//                    txtResult.setText(index.searchPhrase(keyword));
+//                } else {
+//                    txtResult.setText(index.searchOne(keyword));
+//                }
+            txtResult.setText(index.readIndex(keyword));
             }
         }).start();
     }

@@ -176,20 +176,6 @@ public class Helper {
         return filePath.endsWith("xls") || filePath.endsWith("xlsx");
     }
 
-    public List<BufferedWriter> openFile() {
-        writerList = new ArrayList<>();
-        bufferList = new ArrayList<>();
-        try {
-            for (int i = 0; i < fileNames.length; i++) {
-                FileWriter fileWriter = new FileWriter("indexed/" + fileNames[i] + ".txt", true);
-                writerList.add(fileWriter);
-            }
-        } catch (IOException ex) {
-            Logger.getLogger(Helper.class.getName()).log(Level.SEVERE, null, ex);
-        }
-        return bufferList;
-    }
-
     public void closeFile() {
 
         try {
@@ -264,5 +250,94 @@ public class Helper {
             Logger.getLogger(Helper.class.getName()).log(Level.SEVERE, null, ex);
         }
         return null;
+    }
+    
+    public BufferedReader getDistributionRange(String term) {
+        // áàảãạăắặằẳẵâấầẩẫậđéèẻẽẹêếềểễệíìỉĩịóòỏõọôốồổỗộơớờởỡợúùủũụưứừửữựýỳỷỹỵÁÀẢÃẠĂẶẰẲẴÂẤẦẨẪẬĐÉÈẺẼẸÊẾỀỂỄỆÍÌỈĨỊÓÒỎÕỌÔỐỒỔỖỘƠỚỜỞỠỢÚÙỦŨỤƯỨỪỬỮỰÝỲỶỸỴ
+        try {
+
+            Pattern pattern = Pattern.compile("^[aáàảãạăắặằẳẵâấầẩẫậbcdđAÁÀẢÃẠĂẶẰẲẴÂẤẦẨẪBCD]");
+            BufferedReader bufferedReader = null;
+            Matcher m = pattern.matcher(term);
+            if (m.find()) {
+                return bufferedReader = new BufferedReader(new FileReader("indexed/" + fileNames[0] + ".txt"));
+
+            }
+            pattern = Pattern.compile("^[eéèẻẽẹêếềểễệfghEÉÈẺẼẸÊẾỀỂỄỆFGH]");
+            m = pattern.matcher(term);
+            if (m.find()) {
+                return bufferedReader = new BufferedReader(new FileReader("indexed/" + fileNames[1] + ".txt"));
+            }
+            pattern = Pattern.compile("^[iíìỉĩịjklIÍÌỈĨỊJKL]");
+            m = pattern.matcher(term);
+            if (m.find()) {
+                return bufferedReader = new BufferedReader(new FileReader("indexed/" + fileNames[2] + ".txt"));
+            }
+            pattern = Pattern.compile("^[mnoóòỏõọôốồổỗộơớờởỡợpMNOÓÒỎÕỌÔỐỒỔỖỘƠỚỜỞỠỢ]");
+            m = pattern.matcher(term);
+            if (m.find()) {
+                return bufferedReader = new BufferedReader(new FileReader("indexed/" + fileNames[3] + ".txt"));
+            }
+            pattern = Pattern.compile("^[qrstQRST]");
+            m = pattern.matcher(term);
+            if (m.find()) {
+                return bufferedReader = new BufferedReader(new FileReader("indexed/" + fileNames[4] + ".txt"));
+            }
+            pattern = Pattern.compile("^[uúùủũụưứừửữựvwUÚÙỦŨỤƯỨỪỬỮỰVW]");
+            m = pattern.matcher(term);
+            if (m.find()) {
+                return bufferedReader = new BufferedReader(new FileReader("indexed/" + fileNames[5] + ".txt"));
+            }
+            pattern = Pattern.compile("^[xyýỳỷỹỵzXYÝỲỶỸỴZ]");
+            m = pattern.matcher(term);
+            if (m.find()) {
+                return bufferedReader = new BufferedReader(new FileReader("indexed/" + fileNames[6] + ".txt"));
+            }
+            return bufferedReader = new BufferedReader(new FileReader("indexed/" + fileNames[7] + ".txt"));
+        } catch (IOException ex) {
+            Logger.getLogger(Helper.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        return null;
+    }
+
+    public int checkPosDistributionRange(String term) {
+        // áàảãạăắặằẳẵâấầẩẫậđéèẻẽẹêếềểễệíìỉĩịóòỏõọôốồổỗộơớờởỡợúùủũụưứừửữựýỳỷỹỵÁÀẢÃẠĂẶẰẲẴÂẤẦẨẪẬĐÉÈẺẼẸÊẾỀỂỄỆÍÌỈĨỊÓÒỎÕỌÔỐỒỔỖỘƠỚỜỞỠỢÚÙỦŨỤƯỨỪỬỮỰÝỲỶỸỴ
+        Pattern pattern = Pattern.compile("^[aáàảãạăắặằẳẵâấầẩẫậbcdđAÁÀẢÃẠĂẶẰẲẴÂẤẦẨẪBCD]");
+        BufferedWriter bufferedWriter = null;
+        Matcher m = pattern.matcher(term);
+        if (m.find()) {
+            return 0;
+        }
+        pattern = Pattern.compile("^[eéèẻẽẹêếềểễệfghEÉÈẺẼẸÊẾỀỂỄỆFGH]");
+        m = pattern.matcher(term);
+        if (m.find()) {
+            return 1;
+        }
+        pattern = Pattern.compile("^[iíìỉĩịjklIÍÌỈĨỊJKL]");
+        m = pattern.matcher(term);
+        if (m.find()) {
+            return 2;
+        }
+        pattern = Pattern.compile("^[mnoóòỏõọôốồổỗộơớờởỡợpMNOÓÒỎÕỌÔỐỒỔỖỘƠỚỜỞỠỢ]");
+        m = pattern.matcher(term);
+        if (m.find()) {
+            return 3;
+        }
+        pattern = Pattern.compile("^[qrstQRST]");
+        m = pattern.matcher(term);
+        if (m.find()) {
+            return 4;
+        }
+        pattern = Pattern.compile("^[uúùủũụưứừửữựvwUÚÙỦŨỤƯỨỪỬỮỰVW]");
+        m = pattern.matcher(term);
+        if (m.find()) {
+            return 5;
+        }
+        pattern = Pattern.compile("^[xyýỳỷỹỵzXYÝỲỶỸỴZ]");
+        m = pattern.matcher(term);
+        if (m.find()) {
+            return 6;
+        }
+        return 7;
     }
 }

@@ -1,8 +1,8 @@
-package SearchEngine;
+package Tokenizer;
 
-import static SearchEngine.Constants.REMOVE_COMMENT_REGEX;
-import static SearchEngine.Constants.REMOVE_REDUNDANT_CHAR_REGEX;
-import static SearchEngine.Constants.REMOVE_SPACE_REGEX;
+import static Constant.Constants.REMOVE_COMMENT_REGEX;
+import static Constant.Constants.REMOVE_REDUNDANT_CHAR_REGEX;
+import static Constant.Constants.REMOVE_SPACE_REGEX;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
