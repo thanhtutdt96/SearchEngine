@@ -35,6 +35,8 @@ public class Indexing {
     private List<String> excludeList = Arrays.asList("<<", ">>", ">", "<", "»", "/t>><<c", "<<a", "<<t", " » ", "");
 
     private HashMap<String, List<Posting>> indexMap;
+    private HashMap<String, List<Integer>> termMap;
+    private HashMap<String, List<Postings>> tempMap;
     private List<File> fileList;
     private HashMap<Integer, List<Postings>> phraseMap;
 
@@ -112,9 +114,9 @@ public class Indexing {
                     }
                 }
             }
-            //                bufferedReader.close();
-//                fileReader.close();
-//            sortIndex();
+//          bufferedReader.close();
+//          fileReader.close();
+//          sortIndex();
             saveIndex();
         }
     }
@@ -122,7 +124,6 @@ public class Indexing {
     public void sortIndex() {
         Map<String, List<Posting>> map;
         map = new TreeMap<>(indexMap);
-//        indexMap.
     }
 
     public void saveFileList() {
@@ -155,13 +156,18 @@ public class Indexing {
 //        String timeLog = "indexed-" + new SimpleDateFormat("YYYYMMdd").format(Calendar.getInstance().getTime());
 //        FileWriter fileWriter = null;
         BufferedWriter bufferedWriter = null;
+        BufferedWriter posBuffered = null;
+        FileWriter posWriter = null;
+        FileWriter fileWriter = null;
 
         try {
+            posWriter = new FileWriter("indexed/pos.txt", true);
+            posBuffered = new BufferedWriter(posWriter);
             for (Map.Entry<String, List<Posting>> element : indexMap.entrySet()) {
                 StringBuilder builder = new StringBuilder();
                 String term = element.getKey();
-//                fileWriter = new FileWriter("/indexed/" + checkDistributionRange(term) + ".txt", true);
-                bufferedWriter = helper.checkDistributionRange(term);
+                fileWriter = new FileWriter("indexed/" + checkDistributionRange(term).toString() + ".txt", true);
+                bufferedWriter = new BufferedWriter(fileWriter); //helper.checkDistributionRange(term);
                 int m = posOfTerm[helper.checkPosDistributionRange(term)];
                 List<Posting> postings = element.getValue();
                 builder.append(term + "=>");
@@ -185,19 +191,18 @@ public class Indexing {
                     builder.append(System.lineSeparator());
                 }
                 bufferedWriter.write(builder.toString());
-                bufferedWriter.close();
-                helper.closeFile();
+                bufferedWriter.flush();
 
-                FileWriter fileWriter = new FileWriter("/indexed/PosOfTerm.txt", true);
-                bufferedWriter = new BufferedWriter(fileWriter);
-                bufferedWriter.write((term + "=>" + posOfTerm[helper.checkPosDistributionRange(term)] + System.lineSeparator()).toString());
-                bufferedWriter.close();
-                fileWriter.close();
-
+                posBuffered.write((term + "=>" + posOfTerm[helper.checkPosDistributionRange(term)] + System.lineSeparator()).toString());
                 posOfTerm[helper.checkPosDistributionRange(term)]++;
 
 //                fileWriter.close();
             }
+            bufferedWriter.close();
+            fileWriter.close();
+            posBuffered.close();
+            posWriter.close();
+//            helper.closeFile();
 //            bufferedWriter.close();
 //            fileWriter.close();
 
@@ -601,43 +606,72 @@ public class Indexing {
         return false;
     }
 
-    public String readIndex(String word) {
-        HashMap<String, Integer> termMap = new HashMap<>();
+    public String performSearch(String word) {
+        tempMap = new HashMap<>();
         String[] tokens = word.split("\\s+");
         List<Postings> listTerm = new ArrayList<>();
+        BufferedReader bR;
+        String line = "";
+        helper = Helper.getInstance();
         try {
-            BufferedReader bR = new BufferedReader(new FileReader("indexed/PosOfTerm.txt"));
+            for (int k = 0; k < tokens.length; k++) {
+                if (termMap.containsKey(tokens[k])) {
+                    bR = helper.getDistributionRange(tokens[k]);
+                    List<Integer> listPosting = new ArrayList<>();
+                    String filePos = "";
+                    for (int l = 0; l < termMap.get(tokens[k]).size(); l++) {
+                        for (int m = 0; m <= termMap.get(tokens[k]).get(l); m++) {
+                            line = bR.readLine();
+                        }
+                        String posting = line.split("=>")[1];
+                        List<Postings> list = new ArrayList<>();
+                        String[] filePoses = posting.split("\\)");
+
+                        for (int i = 0; i < filePoses.length; i++) {
+                            filePos = filePoses[i].replaceAll("\\(|\\)", "").split(":")[0];
+                            String[] postings = filePoses[i].replaceAll("\\(|\\)", "").split(":")[1].split(",");
+                            for (int m = 0; m < postings.length; m++) {
+                                listPosting.add(Integer.parseInt(postings[m]));
+                            }
+                        }
+                        Postings term = new Postings(Integer.parseInt(filePos), listPosting);
+                        listTerm.add(term);
+                    }
+                    List<Postings> listPostings = tempMap.get(tokens[k]);
+                    if (listPostings == null){
+                        listPostings = new ArrayList<>();
+                        tempMap.put(tokens[k], listPostings);
+                    }
+                    listPostings.addAll(listTerm);
+                }
+            }
+        } catch (IOException ex) {
+            Logger.getLogger(Indexing.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        if (tokens.length == 1) {
+            return searchOne(listTerm);
+        } else {
+            return null;
+        }
+    }
+
+    public void readIndex() {
+        termMap = new HashMap<>();
+        try {
+            BufferedReader bR = new BufferedReader(new FileReader("indexed/pos.txt"));
             String line = null;
             while ((line = bR.readLine()) != null) {
                 String term = line.split("=>")[0];
                 int pos = Integer.parseInt(line.split("=>")[1]);
-                termMap.put(term, pos);
+                List<Integer> tempPos = termMap.get(term);
+                if (tempPos == null) {
+                    tempPos = new ArrayList<>();
+                    termMap.put(term, tempPos);
+                }
+                tempPos.add(pos);
             }
             bR.close();
-            for (int k = 0; k < tokens.length; k++) {
-                bR = helper.getDistributionRange(tokens[k]);
-                List<Integer> listPosting = new ArrayList<>();
-                String filePos = "";
-                for (int l = 0; l <= termMap.get(tokens[k]); l++) {
-                    line = bR.readLine();
-                }
-                String posting = line.split("=>")[1];
-                List<Postings> list = new ArrayList<>();
-                String[] filePoses = posting.split("\\)");
 
-                for (int i = 0; i < filePoses.length; i++) {
-                    filePos = filePoses[i].replaceAll("\\(|\\)", "").split(":")[0];
-                    String[] postings = filePoses[i].replaceAll("\\(|\\)", "").split(":")[1].split(",");
-                    for (int m = 0; m < postings.length; m++) {
-                        listPosting.add(Integer.parseInt(postings[m]));
-                    }
-                }
-                Postings term = new Postings(Integer.parseInt(filePos), listPosting);
-                listTerm.add(term);
-            }
-            if (tokens.length == 1) {
-                return searchOne(listTerm);
-            }
 //            else {
 //                searchPhrase(listTerm);
 //            }
@@ -672,7 +706,6 @@ public class Indexing {
             Logger.getLogger(Indexing.class
                     .getName()).log(Level.SEVERE, null, ex);
         }
-        return "No result found";
     }
 
     public String getDefaultPath() {

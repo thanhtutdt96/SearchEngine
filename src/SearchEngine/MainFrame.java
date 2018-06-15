@@ -106,10 +106,10 @@ public class MainFrame {
             index.buildIndex(fileList);
             index.saveFileList();
         }
-//        } else {
-//            index.readIndex();
-//            index.readFileList();
-//        }
+        else {
+            index.readIndex();
+            index.readFileList();
+        }
         mainFrame.timeEnd = System.currentTimeMillis();
         System.out.println("Running time: " + (mainFrame.timeEnd - mainFrame.timeStart) / 1000);
 
@@ -125,7 +125,6 @@ public class MainFrame {
 //        for(int i=0; i<list.length;i++){
 //            System.out.println(list[i]);
 //        }
-
     }
 
     private void initialize() {
@@ -246,13 +245,15 @@ public class MainFrame {
             @Override
             public void run() {
                 String keyword = txtSearch.getText().toString();
-//                String[] tokens = keyword.split("\\s+");
+                String[] tokens = keyword.split("\\s+");
 //                if (tokens.length > 1) {
 //                    txtResult.setText(index.searchPhrase(keyword));
 //                } else {
 //                    txtResult.setText(index.searchOne(keyword));
 //                }
-            txtResult.setText(index.readIndex(keyword));
+                if (keyword.length()>1) {
+                    txtResult.setText(index.performSearch(keyword));
+                }
             }
         }).start();
     }
