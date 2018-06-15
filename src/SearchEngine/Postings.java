@@ -32,6 +32,14 @@ public class Postings {
     public void add(int pos){
         this.termPos.add(pos);
     }
+    
+    public int get(int pos){
+        return this.termPos.get(pos);
+    }
+    
+    public int getSize(){
+        return this.termPos.size();
+    }
 
     @Override
     public boolean equals(Object o) {

@@ -297,7 +297,7 @@ public class Indexing {
 
         input.useDelimiter("\\s+");
         if (position < noOfLetter) {
-            while (input.hasNext()) {
+            while (!input.hasNext("^[(<<\\w)|(\\w>>)]^[\\p{L}\\s\\d]")) {
                 stringBuilder.append(input.next() + " ");
                 count++;
                 if (count == position - 1) {
@@ -315,7 +315,7 @@ public class Indexing {
             stringBuilder.append("...");
             for (int i = 0; i <= position + noOfLetter; i++) {
                 if (i >= position - noOfLetter) {
-                    if (input.hasNext()) {
+                    if (!input.hasNext("^[(<<\\w)|(\\w>>)]^[\\p{L}\\s\\d]")) {
                         if (i == position - 1) {
                             stringBuilder.append("<b>");
                         }
@@ -325,7 +325,7 @@ public class Indexing {
                         stringBuilder.append(input.next() + " ");
                     }
                 } else {
-                    if (input.hasNext()) {
+                    if (!input.hasNext("^[(<<\\w)|(\\w>>)]^[\\p{L}\\s\\d]")) {
                         input.next();
                     }
                 }
@@ -351,7 +351,7 @@ public class Indexing {
         int count = 0;
         int wordCount = 0;
         StringBuilder stringBuilder = new StringBuilder();
-        input.useDelimiter("\\s+");
+        input.useDelimiter("\\s(<<\\\\w)|(\\\\w>>)[^\\\\p{L}\\\\s\\\\d]");
         int posMin = position.get(1);
         int posMax = position.get(1);
         for (int i = 2; i < position.size(); i++) {
@@ -441,16 +441,18 @@ public class Indexing {
         StringBuilder result = new StringBuilder();
 
         if (postingResult != null) {
-            result.append("<b style='font-size: 130%'>*** " + postingResult.size() + " results matched ***</b>");
-            for (int i = 0; i < postingResult.size(); i++) {
-                String innerDoc = retrieveIndex(fileList.get(postingResult.get(i).getFilePos()).getPath(), postingResult.get(i).getTermPos());
-                String fileName = fileList.get(postingResult.get(i).getFilePos()).getName();
-                result.append("<p style='color: blue; font-size= 130%'>\"<b>"
-                        + "<a href='file:///" + fileList.get(postingResult.get(i).getFilePos()).getAbsolutePath() + "'>" + fileName + "</a>"
-                        + "\"</b>, <em>Position:</em> " + postingResult.get(i).getTermPos());
-                result.append("<div>" + innerDoc + "</div></p>");
+            result.append("<b style='font-size: 130%'>*** " + postingResult.get(0).getSize() + " results matched ***</b>");
+            for (int j = 0; j < postingResult.size(); j++) {
+                for (int i = 0; i < postingResult.get(j).getTermPos().size(); i++) {
+                    String innerDoc = retrieveIndex(fileList.get(postingResult.get(j).getFilePos()).getPath(), postingResult.get(j).get(i));
+                    String fileName = fileList.get(postingResult.get(j).getFilePos()).getName();
+                    result.append("<p style='color: blue; font-size= 130%'>" + i + ". \"<b>"
+                            + "<a href='file:///" + fileList.get(postingResult.get(j).getFilePos()).getAbsolutePath() + "'>" + fileName + "</a>"
+                            + "\"</b>, <em>Position:</em> " + postingResult.get(j).get(i));
+                    result.append("<div>" + innerDoc + "</div></p>");
+                }
+                result.append("<br/>");
             }
-            result.append("<br/>");
         } else {
             result.append("No matches found");
         }
@@ -638,7 +640,7 @@ public class Indexing {
                         listTerm.add(term);
                     }
                     List<Postings> listPostings = tempMap.get(tokens[k]);
-                    if (listPostings == null){
+                    if (listPostings == null) {
                         listPostings = new ArrayList<>();
                         tempMap.put(tokens[k], listPostings);
                     }
