@@ -103,10 +103,12 @@ public class MainFrame {
         List<File> fileList = index.indexFileList("res/");
 
         if (!index.isIndexed("indexed/")) {
+            index.clearPrefs();
             index.buildIndex(fileList);
             index.saveFileList();
         }
         else {
+            index.getPrefs();
             index.readIndex();
             index.readFileList();
         }

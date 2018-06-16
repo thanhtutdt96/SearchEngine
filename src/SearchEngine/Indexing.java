@@ -25,6 +25,7 @@ import java.util.logging.Logger;
 import java.util.prefs.Preferences;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.prefs.*;
 
 public class Indexing {
 
@@ -39,6 +40,7 @@ public class Indexing {
     private HashMap<String, List<Postings>> tempMap;
     private List<File> fileList;
     private HashMap<Integer, List<Postings>> phraseMap;
+    private Preferences prefs = Preferences.userRoot().node(this.getClass().getName());
 
     private int[] posOfTerm = {0, 0, 0, 0, 0, 0, 0, 0};
 
@@ -56,6 +58,26 @@ public class Indexing {
             for (int i = 0; i < files.length; i++) {
                 files[i].delete();
             }
+        }
+    }
+
+    public void putPrefs() {
+        for (int i = 0; i < posOfTerm.length; i++) {
+            prefs.put(String.valueOf(i), newline);
+        }
+    }
+
+    public void getPrefs() {
+        for (int i = 0; i < posOfTerm.length; i++) {
+            posOfTerm[i] = Integer.parseInt(prefs.get(String.valueOf(i), "0"));
+        }
+    }
+
+    public void clearPrefs() {
+        try {
+            prefs.clear();
+        } catch (BackingStoreException ex) {
+            Logger.getLogger(Indexing.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
 
@@ -198,6 +220,7 @@ public class Indexing {
 
 //                fileWriter.close();
             }
+            putPrefs();
             bufferedWriter.close();
             fileWriter.close();
             posBuffered.close();
@@ -411,7 +434,7 @@ public class Indexing {
         return stringBuilder.toString();
     }
 
-    public String searchOne(List<Postings> postingResult) {
+    public String searchOne(List<List<Postings>> postingResult) {
 //        String query = keyword.toLowerCase().split("(\\s|[.]|[,]|[:]|[?])+")[0];
 //        byte byteArray[] = query.getBytes();
 //        try {
@@ -441,18 +464,120 @@ public class Indexing {
         StringBuilder result = new StringBuilder();
 
         if (postingResult != null) {
-            result.append("<b style='font-size: 130%'>*** " + postingResult.get(0).getSize() + " results matched ***</b>");
+            result.append("<b style='font-size: 130%'>*** " + postingResult.get(0).get(0).getSize() + " results matched ***</b>");
             for (int j = 0; j < postingResult.size(); j++) {
-                for (int i = 0; i < postingResult.get(j).getTermPos().size(); i++) {
-                    String innerDoc = retrieveIndex(fileList.get(postingResult.get(j).getFilePos()).getPath(), postingResult.get(j).get(i));
-                    String fileName = fileList.get(postingResult.get(j).getFilePos()).getName();
-                    result.append("<p style='color: blue; font-size= 130%'>" + i + ". \"<b>"
-                            + "<a href='file:///" + fileList.get(postingResult.get(j).getFilePos()).getAbsolutePath() + "'>" + fileName + "</a>"
-                            + "\"</b>, <em>Position:</em> " + postingResult.get(j).get(i));
+                for (int i = 0; i < postingResult.get(0).get(j).getTermPos().size(); i++) {
+                    String innerDoc = retrieveIndex(fileList.get(postingResult.get(0).get(j).getFilePos()).getPath(), postingResult.get(0).get(j).get(i));
+                    String fileName = fileList.get(postingResult.get(0).get(j).getFilePos()).getName();
+                    result.append("<p style='color: blue; font-size= 130%'>" + (i + 1) + ". \"<b>"
+                            + "<a href='file:///" + fileList.get(postingResult.get(0).get(j).getFilePos()).getAbsolutePath() + "'>" + fileName + "</a>"
+                            + "\"</b>, <em>Position:</em> " + postingResult.get(0).get(j).get(i));
                     result.append("<div>" + innerDoc + "</div></p>");
                 }
                 result.append("<br/>");
             }
+        } else {
+            result.append("No matches found");
+        }
+        return result.toString();
+    }
+
+    public String searchPhrase(List<List<Postings>> postingResult) {
+        phraseMap = new HashMap<>();
+        StringBuilder result = new StringBuilder();
+        boolean hasResult = false;
+        int smallestPosting = Integer.MAX_VALUE;
+        List<Integer> valueList = new ArrayList<>();
+        int lengthOfPhrase = 0;
+        List<String> meaningfulWords = new ArrayList<>();
+        Collections.sort(postingResult, new Comparator<List<Postings>>() {
+            public int compare(List<Postings> p1, List<Postings> p2) {
+                int size1 = 0, size2 = 0;
+                for (int i = 0; i < p1.size(); i++) {
+                    size1+=p1.get(i).getSize();
+                }
+                for (int i = 0; i < p2.size(); i++) {
+                    size2+=p2.get(i).getSize();
+                }
+                return size1 - size2;
+            }
+        });
+        List<Postings> initialList = postingResult.get(0);
+        for (int i = 0; i < initialList.size(); i++) {
+            int curPos = initialList.get(0).getTermPos().get(0);
+            Postings phraseResult = new Postings(-1, new ArrayList<>());
+            boolean added = false;
+            for (int j = 1; j < postingResult.size(); j++) {
+                int curFilePos = initialList.get(i).getFilePos();
+                if (phraseResult.getFilePos() == -1) {
+                    phraseResult.setFilePos(curFilePos);
+                    phraseResult.add(curPos);
+                }
+                for (int k = -5; k < 6; k++) {
+                    if (postingResult.get(j).contains(curPos+k)) {
+                        if (!phraseResult.getTermPos().contains(curPosting.getTermPos())) {
+                            phraseResult.add(curPosting.getTermPos());
+                            if (phraseResult.getTermPos().size() == lengthOfPhrase) {
+                                added = true;
+                            }
+                        }
+                        break;
+                    }
+                }
+                if (added) {
+                    int value = calculateValue(phraseResult.getTermPos());
+                    if (!valueList.contains(value)) {
+                        valueList.add(value);
+                    }
+                    List<Postings> phraseTmp = new ArrayList<>();
+                    phraseTmp.add(phraseResult);
+                    List<Postings> tmpList = phraseMap.get(value);
+                    hasResult = true;
+                    if (tmpList == null) {
+                        phraseMap.put(value, phraseTmp);
+                    } else {
+                        tmpList.add(phraseResult);
+                    }
+                }
+            }
+        }
+        Collections.sort(valueList, new Comparator<Integer>() {
+            @Override
+            public int compare(Integer o1, Integer o2) {
+                return o1 < o2 ? -1 : o1 == o2 ? 0 : 1;
+            }
+        });
+        if (hasResult == true) {
+            int noOfResults = 0;
+            for (int i = 0; i < valueList.size(); i++) {
+                noOfResults += phraseMap.get(valueList.get(i)).size();
+            }
+            result.append("<b style='font-size: 130%'>*** " + noOfResults + " results matched ***</b>");
+            for (int i = 0; i < valueList.size(); i++) {
+                String innerDoc;
+                List<Postings> termsPos = phraseMap.get(valueList.get(i));
+                for (int j = 0; j < termsPos.size(); j++) {
+                    String fileName = fileList.get(termsPos.get(j).getFilePos()).getName();
+                    String filePath = fileList.get(termsPos.get(j).getFilePos()).getPath();
+                    innerDoc = retrieveIndex(filePath, termsPos.get(j).getTermPos());
+                    result.append("<p style='color: blue; font-size= 130%'>\"<b>"
+                            + "<a href='file:///" + fileList.get(termsPos.get(j).getFilePos()).getAbsolutePath() + "'>" + fileName + "</a>"
+                            + "\"</b>, <em>Position:</em> ");
+                    Collections.sort(termsPos.get(j).getTermPos(), new Comparator<Integer>() {
+                        @Override
+                        public int compare(Integer o1, Integer o2) {
+                            return o1 < o2 ? -1 : o1 == o2 ? 0 : 1;
+                        }
+                    });
+                    for (int k = 0; k < termsPos.get(j).getTermPos().size() - 1; k++) {
+                        result.append(termsPos.get(j).getTermPos().get(k) + " & ");
+                    }
+                    result.append(termsPos.get(j).getTermPos().get(termsPos.get(j).getTermPos().size() - 1));
+                    //+ posMin + " & " + posMax);
+                    result.append("<div>" + innerDoc + "</div></p>");
+                }
+            }
+            result.append("<br/>");
         } else {
             result.append("No matches found");
         }
@@ -645,15 +770,20 @@ public class Indexing {
                         tempMap.put(tokens[k], listPostings);
                     }
                     listPostings.addAll(listTerm);
+                    listTerm.clear();
                 }
             }
         } catch (IOException ex) {
             Logger.getLogger(Indexing.class.getName()).log(Level.SEVERE, null, ex);
         }
+        List<List<Postings>> postingResult = new ArrayList<>();
+        for (String key : tempMap.keySet()) {
+            postingResult.add(tempMap.get(key));
+        }
         if (tokens.length == 1) {
-            return searchOne(listTerm);
+            return searchOne(postingResult);
         } else {
-            return null;
+            return null;//searchPhrase(postingResult);
         }
     }
 
