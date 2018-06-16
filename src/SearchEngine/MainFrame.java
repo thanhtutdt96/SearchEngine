@@ -105,10 +105,10 @@ public class MainFrame {
         if (!index.isIndexed("indexed/")) {
             index.buildIndex(fileList);
             index.saveFileList();
-        }
-        else {
-            index.readIndex();
-            index.readFileList();
+        } else {
+//            index.readIndex();
+//            index.readFileList();
+            index.printMap();
         }
         mainFrame.timeEnd = System.currentTimeMillis();
         System.out.println("Running time: " + (mainFrame.timeEnd - mainFrame.timeStart) / 1000);
@@ -251,7 +251,7 @@ public class MainFrame {
 //                } else {
 //                    txtResult.setText(index.searchOne(keyword));
 //                }
-                if (keyword.length()>1) {
+                if (keyword.length() > 1) {
                     txtResult.setText(index.performSearch(keyword));
                 }
             }

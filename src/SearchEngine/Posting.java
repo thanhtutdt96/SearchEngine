@@ -1,7 +1,10 @@
 package SearchEngine;
 
+import java.io.Serializable;
 
-public class Posting {
+public class Posting implements Serializable {
+
+    private static final long serialVersionUID = 1113799434508676095L;
 
     private int filePos;
     private int termPos;
@@ -31,17 +34,19 @@ public class Posting {
     public boolean equals(Object o) {
         boolean isEquals = false;
 
-        if (o instanceof Posting){
+        if (o instanceof Posting) {
             Posting pt = (Posting) o;
-            if (pt.termPos == this.termPos && pt.filePos == this.filePos){
-               isEquals = true;
+            if (pt.termPos == this.termPos && pt.filePos == this.filePos) {
+                isEquals = true;
             };
         }
 
-     return isEquals;
+        return isEquals;
     }
-    
-    
+
+    @Override
+    public String toString() {
+        return "(" + filePos + "," + termPos + ")";
+    }
+
 }
-
-

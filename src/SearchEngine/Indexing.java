@@ -6,10 +6,14 @@ import static SearchEngine.MainFrame.helper;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.List;
@@ -112,12 +116,54 @@ public class Indexing {
                     } else {
                         postings.add(new Posting(filePos, termPos));
                     }
-                }
+                } 
             }
 //          bufferedReader.close();
 //          fileReader.close();
 //          sortIndex();
-            saveIndex();
+//            saveIndex();
+
+            FileOutputStream fos = null;
+            ObjectOutputStream oos = null;
+            try {
+                fos = new FileOutputStream("indexed/data.bin");
+                oos = new ObjectOutputStream(fos);
+                oos.writeObject(indexMap);
+                oos.close();
+                fos.close();
+            } catch (Exception exception) {
+                exception.printStackTrace();
+            }
+        }
+    }
+
+    public void saveIndexBinary() {
+        
+        
+    }
+
+    public void printMap() {
+        long timeStart = 0;
+        long timeEnd = 0;
+        indexMap = new HashMap<>();
+        FileInputStream fis = null;
+        ObjectInputStream ois = null;
+        // Read serializable file
+        try {
+            timeStart = System.currentTimeMillis();
+            fis = new FileInputStream("indexed/data.bin");
+            ois = new ObjectInputStream(fis);
+
+            indexMap = (HashMap<String, List<Posting>>) ois.readObject();
+            timeEnd = System.currentTimeMillis();
+            ois.close();
+            fis.close();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        System.out.println("Time: " + (timeEnd - timeStart) / 1000);
+        for (Map.Entry<String, List<Posting>> m : indexMap.entrySet()) {
+            System.out.println(m.getKey() + "=>" + m.getValue());
         }
     }
 
