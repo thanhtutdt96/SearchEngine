@@ -100,8 +100,7 @@ public class MainFrame {
         MainFrame mainFrame = new MainFrame();
         mainFrame.frmMain.setVisible(true);
 
-        index.clearIndexedFolder("indexed/");
-
+//        index.clearIndexedFolder("indexed/");
         mainFrame.timeStart = System.currentTimeMillis();
         List<File> fileList = index.indexFileList("res/");
 
@@ -110,20 +109,13 @@ public class MainFrame {
             index.saveFileList();
             index.saveAllIndex();
         } else {
-            index.printMap();
+//            index.printMap();
 //            index.readIndex();
 //            index.readFileList();
+            index.loadAllIndexFiles();
         }
         mainFrame.timeEnd = System.currentTimeMillis();
         System.out.println("Running time: " + (mainFrame.timeEnd - mainFrame.timeStart) / 1000);
-
-//           
-//        });
-//        helper = Helper.getInstance();
-//        String[] list=helper.readExcelFile("res/test.xlsx");
-//        for(int i=0; i<list.length;i++){
-//            System.out.println(list[i]);
-//        }
     }
 
     private void initialize() {

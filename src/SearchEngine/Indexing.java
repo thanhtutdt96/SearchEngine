@@ -11,6 +11,7 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.FileWriter;
+import java.io.FilenameFilter;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
@@ -37,6 +38,38 @@ public class Indexing {
     public HashMap<String, List<Posting>> hashMap_u_w;
     public HashMap<String, List<Posting>> hashMap_x_z;
     public HashMap<String, List<Posting>> hashMap_other;
+
+    public void setHashMap_a_d(HashMap<String, List<Posting>> hashMap_a_d) {
+        this.hashMap_a_d = hashMap_a_d;
+    }
+
+    public void setHashMap_e_h(HashMap<String, List<Posting>> hashMap_e_h) {
+        this.hashMap_e_h = hashMap_e_h;
+    }
+
+    public void setHashMap_i_l(HashMap<String, List<Posting>> hashMap_i_l) {
+        this.hashMap_i_l = hashMap_i_l;
+    }
+
+    public void setHashMap_m_p(HashMap<String, List<Posting>> hashMap_m_p) {
+        this.hashMap_m_p = hashMap_m_p;
+    }
+
+    public void setHashMap_q_t(HashMap<String, List<Posting>> hashMap_q_t) {
+        this.hashMap_q_t = hashMap_q_t;
+    }
+
+    public void setHashMap_u_w(HashMap<String, List<Posting>> hashMap_u_w) {
+        this.hashMap_u_w = hashMap_u_w;
+    }
+
+    public void setHashMap_x_z(HashMap<String, List<Posting>> hashMap_x_z) {
+        this.hashMap_x_z = hashMap_x_z;
+    }
+
+    public void setHashMap_other(HashMap<String, List<Posting>> hashMap_other) {
+        this.hashMap_other = hashMap_other;
+    }
 
     private static Indexing instance = null;
     public Helper helper;
@@ -70,7 +103,7 @@ public class Indexing {
         }
     }
 
-    public void initContaner() {
+    private void initContaner() {
         hashMap_a_d = new HashMap<>();
         hashMap_e_h = new HashMap<>();
         hashMap_i_l = new HashMap<>();
@@ -81,7 +114,7 @@ public class Indexing {
         hashMap_other = new HashMap<>();
     }
 
-    public HashMap<String, List<Posting>> getHashMapByTerm(String term) {
+    private HashMap<String, List<Posting>> getHashMapByTerm(String term) {
         helper = Helper.getInstance();
 
         if (helper.isA_DFirst(term)) {
@@ -119,6 +152,63 @@ public class Indexing {
             return "x-z";
         }
         return "other";
+    }
+
+    private HashMap<String, List<Posting>> getHashMapByFileName(String fileName) {
+        switch (fileName.replace(".bin", "")) {
+            case "a-d":
+                return hashMap_a_d;
+            case "e-h":
+                return hashMap_e_h;
+            case "i-l":
+                return hashMap_i_l;
+            case "m-p":
+                return hashMap_m_p;
+            case "q-t":
+                return hashMap_q_t;
+            case "u-w":
+                return hashMap_u_w;
+            case "x-z":
+                return hashMap_x_z;
+        }
+        return hashMap_other;
+    }
+
+    private void setHashMapByFileName(String fileName, HashMap<String, List<Posting>> hashMap) {
+        String name = fileName.replace(".bin", "");
+        switch (name) {
+            case "a-d":
+                setHashMap_a_d(hashMap);
+                break;
+                
+            case "e-h":
+                setHashMap_e_h(hashMap);
+                break;
+                
+            case "i-l":
+                setHashMap_i_l(hashMap);
+                break;
+
+            case "m-p":
+                setHashMap_m_p(hashMap);
+                break;
+
+            case "q-t":
+                setHashMap_q_t(hashMap);
+                break;
+
+            case "u-w":
+                setHashMap_u_w(hashMap);
+                break;
+
+            case "x-z":
+                setHashMap_x_z(hashMap);
+                break;
+
+            case "other":
+                setHashMap_other(hashMap);
+                break;
+        }
     }
 
     public void buildIndex(List<File> files) {
@@ -183,16 +273,79 @@ public class Indexing {
 
     public void saveAllIndex() {
         long timeStart = System.currentTimeMillis();
-        saveIndexBinary(hashMap_a_d);
-        saveIndexBinary(hashMap_e_h);
-        saveIndexBinary(hashMap_i_l);
-        saveIndexBinary(hashMap_m_p);
-        saveIndexBinary(hashMap_q_t);
-        saveIndexBinary(hashMap_u_w);
-        saveIndexBinary(hashMap_x_z);
-        saveIndexBinary(hashMap_other);
-        long timeEnd = System.currentTimeMillis();
-        System.err.println("Total save time: " + (timeEnd - timeStart) / 1000);
+        Thread thread1 = new Thread(new Runnable() {
+            @Override
+            public void run() {
+                saveIndexBinary(hashMap_a_d);
+            }
+        }
+        );
+
+        Thread thread2 = new Thread(new Runnable() {
+            @Override
+            public void run() {
+                saveIndexBinary(hashMap_e_h);
+            }
+        }
+        );
+
+        Thread thread3 = new Thread(new Runnable() {
+            @Override
+            public void run() {
+                saveIndexBinary(hashMap_i_l);
+            }
+        }
+        );
+
+        Thread thread4 = new Thread(new Runnable() {
+            @Override
+            public void run() {
+                saveIndexBinary(hashMap_m_p);
+            }
+        }
+        );
+
+        Thread thread5 = new Thread(new Runnable() {
+            @Override
+            public void run() {
+                saveIndexBinary(hashMap_q_t);
+            }
+        }
+        );
+
+        Thread thread6 = new Thread(new Runnable() {
+            @Override
+            public void run() {
+                saveIndexBinary(hashMap_u_w);
+            }
+        }
+        );
+
+        Thread thread7 = new Thread(new Runnable() {
+            @Override
+            public void run() {
+                saveIndexBinary(hashMap_x_z);
+            }
+        }
+        );
+
+        Thread thread8 = new Thread(new Runnable() {
+            @Override
+            public void run() {
+                saveIndexBinary(hashMap_other);
+            }
+        }
+        );
+
+        thread1.start();
+        thread2.start();
+        thread3.start();
+        thread4.start();
+        thread5.start();
+        thread6.start();
+        thread7.start();
+        thread8.start();
+
     }
 
     public void saveIndexBinary(HashMap<String, List<Posting>> hashMap) {
@@ -209,30 +362,44 @@ public class Indexing {
         }
     }
 
-    public void printMap() {
-        long timeStart = 0;
-        long timeEnd = 0;
-        hashMap_a_d = new HashMap<>();
+    public void loadAllIndexFiles() {
+        File indexFolder = new File("indexed/");
+        File[] listOfFiles = indexFolder.listFiles(new FilenameFilter() {
+            @Override
+            public boolean accept(File file, String string) {
+                return string.matches("(([a-z]-[a-z])|other)\\.bin");
+            }
+        }
+        );
+        for (File file : listOfFiles) {
+            new Thread(new Runnable() {
+                @Override
+                public void run() {
+            readBinFile(file.getName());
+                }
+            }
+            ).start();
+        }
+    }
+
+    public void readBinFile(String fileName) {
+        HashMap<String, List<Posting>> hashMap = new HashMap<>();
         FileInputStream fis = null;
         ObjectInputStream ois = null;
         // Read serializable file
         try {
-            timeStart = System.currentTimeMillis();
-            fis = new FileInputStream("indexed/a-d.bin");
+            fis = new FileInputStream("indexed/" + fileName);
             ois = new ObjectInputStream(fis);
-
-            hashMap_a_d = (HashMap<String, List<Posting>>) ois.readObject();
-            timeEnd = System.currentTimeMillis();
+            System.out.println(fileName);
+            hashMap = (HashMap<String, List<Posting>>) ois.readObject();
+            setHashMapByFileName(fileName, hashMap);
             ois.close();
             fis.close();
         } catch (Exception e) {
             e.printStackTrace();
         }
-        System.out.println("Read time: " + (timeEnd - timeStart) / 1000);
-//        for (Map.Entry<String, List<Posting>> m : hashMap_a_d.entrySet()) {
-//            System.out.println(m.getKey() + "=>" + m.getValue());
-//        }
     }
+
     public void saveFileList() {
 //        String timeLog = "list-" + new SimpleDateFormat("YYYYMMdd").format(Calendar.getInstance().getTime());
         FileWriter fileWriter;
