@@ -99,25 +99,24 @@ public class MainFrame {
     public static void main(String args[]) {
         MainFrame mainFrame = new MainFrame();
         mainFrame.frmMain.setVisible(true);
+
+        index.clearIndexedFolder("indexed/");
+
         mainFrame.timeStart = System.currentTimeMillis();
         List<File> fileList = index.indexFileList("res/");
 
         if (!index.isIndexed("indexed/")) {
             index.buildIndex(fileList);
             index.saveFileList();
+            index.saveAllIndex();
         } else {
+            index.printMap();
 //            index.readIndex();
 //            index.readFileList();
-            index.printMap();
         }
         mainFrame.timeEnd = System.currentTimeMillis();
         System.out.println("Running time: " + (mainFrame.timeEnd - mainFrame.timeStart) / 1000);
 
-//        mainFrame.frmMain.addWindowListener(new WindowAdapter() {
-//            @Override
-//            public void windowClosed(WindowEvent we) {
-//                index.clearIndexedFolder("indexed/");
-//            }
 //           
 //        });
 //        helper = Helper.getInstance();
@@ -191,7 +190,7 @@ public class MainFrame {
                     lblPath.setText("Folder: " + folderPath);
                     List<File> fileList = index.indexFileList(folderPath);
                     index.buildIndex(fileList);
-                    index.saveIndex();
+//                    index.saveIndex();
                     index.saveFileList();
 //                    index.saveFolderPath(folderPath);
                 } else {

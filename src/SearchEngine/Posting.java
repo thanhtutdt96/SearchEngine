@@ -4,7 +4,7 @@ import java.io.Serializable;
 
 public class Posting implements Serializable {
 
-    private static final long serialVersionUID = 1113799434508676095L;
+    private static final long serialVersionUID = 1L;
 
     private int filePos;
     private int termPos;

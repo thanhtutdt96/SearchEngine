@@ -14,12 +14,9 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
-import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Arrays;
-import java.util.Collections;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Scanner;
@@ -32,13 +29,23 @@ import java.util.regex.Pattern;
 
 public class Indexing {
 
+    public HashMap<String, List<Posting>> hashMap_a_d;
+    public HashMap<String, List<Posting>> hashMap_e_h;
+    public HashMap<String, List<Posting>> hashMap_i_l;
+    public HashMap<String, List<Posting>> hashMap_m_p;
+    public HashMap<String, List<Posting>> hashMap_q_t;
+    public HashMap<String, List<Posting>> hashMap_u_w;
+    public HashMap<String, List<Posting>> hashMap_x_z;
+    public HashMap<String, List<Posting>> hashMap_other;
+
     private static Indexing instance = null;
+    public Helper helper;
     private Parser parser = null;
     private String newline = System.getProperty("line.separator");
 
     private List<String> excludeList = Arrays.asList("<<", ">>", ">", "<", "»", "/t>><<c", "<<a", "<<t", " » ", "");
 
-    private HashMap<String, List<Posting>> indexMap;
+//    private HashMap<String, List<Posting>> indexMap;
     private HashMap<String, List<Integer>> termMap;
     private HashMap<String, List<Postings>> tempMap;
     private List<File> fileList;
@@ -57,18 +64,70 @@ public class Indexing {
         File folder = new File(path);
         File files[] = folder.listFiles();
         if (files != null) {
-            for (int i = 0; i < files.length; i++) {
-                files[i].delete();
+            for (File file : files) {
+                file.delete();
             }
         }
     }
 
+    public void initContaner() {
+        hashMap_a_d = new HashMap<>();
+        hashMap_e_h = new HashMap<>();
+        hashMap_i_l = new HashMap<>();
+        hashMap_m_p = new HashMap<>();
+        hashMap_q_t = new HashMap<>();
+        hashMap_u_w = new HashMap<>();
+        hashMap_x_z = new HashMap<>();
+        hashMap_other = new HashMap<>();
+    }
+
+    public HashMap<String, List<Posting>> getHashMapByTerm(String term) {
+        helper = Helper.getInstance();
+
+        if (helper.isA_DFirst(term)) {
+            return hashMap_a_d;
+        } else if (helper.isE_HFirst(term)) {
+            return hashMap_e_h;
+        } else if (helper.isI_LFirst(term)) {
+            return hashMap_i_l;
+        } else if (helper.isM_PFirst(term)) {
+            return hashMap_m_p;
+        } else if (helper.isQ_TFirst(term)) {
+            return hashMap_q_t;
+        } else if (helper.isU_WFirst(term)) {
+            return hashMap_u_w;
+        } else if (helper.isX_ZFirst(term)) {
+            return hashMap_x_z;
+        }
+        return hashMap_other;
+    }
+
+    public String getIndexFileNameByHashMap(HashMap<String, List<Posting>> hashMap) {
+        if (hashMap.equals(hashMap_a_d)) {
+            return "a-d";
+        } else if (hashMap.equals(hashMap_e_h)) {
+            return "e-h";
+        } else if (hashMap.equals(hashMap_i_l)) {
+            return "i-l";
+        } else if (hashMap.equals(hashMap_m_p)) {
+            return "m-p";
+        } else if (hashMap.equals(hashMap_q_t)) {
+            return "q-t";
+        } else if (hashMap.equals(hashMap_u_w)) {
+            return "u-w";
+        } else if (hashMap.equals(hashMap_x_z)) {
+            return "x-z";
+        }
+        return "other";
+    }
+
     public void buildIndex(List<File> files) {
         parser = Parser.getInstance();
-        indexMap = new HashMap<>();
+//        indexMap = new HashMap<>();
+        initContaner();
 
         for (int i = 0; i < files.size(); i++) {
-            indexMap.clear();
+//            indexMap.clear();
             String filePath = files.get(i).getAbsolutePath();
             int termPos = 0;
             int filePos = fileList.indexOf(files.get(i));
@@ -78,12 +137,9 @@ public class Indexing {
                 filePos = fileList.size() - 1;
             }
 
-            // Read input file
             helper = Helper.getInstance();
             String[] line = helper.readFileByExtenstions(filePath);
             for (int j = 0; j < line.length; j++) {
-                byte byteArray[] = line[j].getBytes();
-//                    line = new String(byteArray, "UTF-8");
 
                 if (line[j].trim().length() == 0) {
                     continue;
@@ -106,72 +162,77 @@ public class Indexing {
 
                     termPos++;
 
-                    List<Posting> postings = indexMap.get(term);
+                    List<Posting> postings = getHashMapByTerm(term).get(term);
                     if (postings == null) {
                         postings = new ArrayList<>();
-                        indexMap.put(term, postings);
+                        getHashMapByTerm(term).put(term, postings);
                     }
                     if (helper.checkExcelExtention(filePath)) {
                         postings.add(new Posting(filePos, helper.getSheetByIndex(j)));
                     } else {
                         postings.add(new Posting(filePos, termPos));
                     }
-                } 
+                }
             }
 //          bufferedReader.close();
 //          fileReader.close();
 //          sortIndex();
 //            saveIndex();
-
-            FileOutputStream fos = null;
-            ObjectOutputStream oos = null;
-            try {
-                fos = new FileOutputStream("indexed/data.bin");
-                oos = new ObjectOutputStream(fos);
-                oos.writeObject(indexMap);
-                oos.close();
-                fos.close();
-            } catch (Exception exception) {
-                exception.printStackTrace();
-            }
         }
     }
 
-    public void saveIndexBinary() {
-        
-        
+    public void saveAllIndex() {
+        long timeStart = System.currentTimeMillis();
+        saveIndexBinary(hashMap_a_d);
+        saveIndexBinary(hashMap_e_h);
+        saveIndexBinary(hashMap_i_l);
+        saveIndexBinary(hashMap_m_p);
+        saveIndexBinary(hashMap_q_t);
+        saveIndexBinary(hashMap_u_w);
+        saveIndexBinary(hashMap_x_z);
+        saveIndexBinary(hashMap_other);
+        long timeEnd = System.currentTimeMillis();
+        System.err.println("Total save time: " + (timeEnd - timeStart) / 1000);
+    }
+
+    public void saveIndexBinary(HashMap<String, List<Posting>> hashMap) {
+        FileOutputStream fos = null;
+        ObjectOutputStream oos = null;
+        try {
+            fos = new FileOutputStream("indexed/" + getIndexFileNameByHashMap(hashMap) + ".bin");
+            oos = new ObjectOutputStream(fos);
+            oos.writeObject(hashMap);
+            oos.close();
+            fos.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     public void printMap() {
         long timeStart = 0;
         long timeEnd = 0;
-        indexMap = new HashMap<>();
+        hashMap_a_d = new HashMap<>();
         FileInputStream fis = null;
         ObjectInputStream ois = null;
         // Read serializable file
         try {
             timeStart = System.currentTimeMillis();
-            fis = new FileInputStream("indexed/data.bin");
+            fis = new FileInputStream("indexed/a-d.bin");
             ois = new ObjectInputStream(fis);
 
-            indexMap = (HashMap<String, List<Posting>>) ois.readObject();
+            hashMap_a_d = (HashMap<String, List<Posting>>) ois.readObject();
             timeEnd = System.currentTimeMillis();
             ois.close();
             fis.close();
         } catch (Exception e) {
             e.printStackTrace();
         }
-        System.out.println("Time: " + (timeEnd - timeStart) / 1000);
-        for (Map.Entry<String, List<Posting>> m : indexMap.entrySet()) {
-            System.out.println(m.getKey() + "=>" + m.getValue());
-        }
+        System.out.println("Read time: " + (timeEnd - timeStart) / 1000);
+//        for (Map.Entry<String, List<Posting>> m : hashMap_a_d.entrySet()) {
+//            System.out.println(m.getKey() + "=>" + m.getValue());
+//        }
     }
-
-    public void sortIndex() {
-        Map<String, List<Posting>> map;
-        map = new TreeMap<>(indexMap);
-    }
-
     public void saveFileList() {
 //        String timeLog = "list-" + new SimpleDateFormat("YYYYMMdd").format(Calendar.getInstance().getTime());
         FileWriter fileWriter;
@@ -198,67 +259,64 @@ public class Indexing {
         }
     }
 
-    public void saveIndex() {
-//        String timeLog = "indexed-" + new SimpleDateFormat("YYYYMMdd").format(Calendar.getInstance().getTime());
+//    public void saveIndex() {
+//        BufferedWriter bufferedWriter = null;
+//        BufferedWriter posBuffered = null;
+//        FileWriter posWriter = null;
 //        FileWriter fileWriter = null;
-        BufferedWriter bufferedWriter = null;
-        BufferedWriter posBuffered = null;
-        FileWriter posWriter = null;
-        FileWriter fileWriter = null;
-
-        try {
-            posWriter = new FileWriter("indexed/pos.txt", true);
-            posBuffered = new BufferedWriter(posWriter);
-            for (Map.Entry<String, List<Posting>> element : indexMap.entrySet()) {
-                StringBuilder builder = new StringBuilder();
-                String term = element.getKey();
-                fileWriter = new FileWriter("indexed/" + checkDistributionRange(term).toString() + ".txt", true);
-                bufferedWriter = new BufferedWriter(fileWriter); //helper.checkDistributionRange(term);
-                int m = posOfTerm[helper.checkPosDistributionRange(term)];
-                List<Posting> postings = element.getValue();
-                builder.append(term + "=>");
-                int curPos = postings.get(0).getFilePos();
-                builder.append("(" + postings.get(0).getFilePos() + ":" + postings.get(0).getTermPos());
-                if (postings.size() > 1) {
-                    for (int i = 1; i < postings.size(); i++) {
-                        if (postings.get(i).getFilePos() == curPos) {
-                            builder.append("," + postings.get(i).getTermPos());
-                        } else {
-                            curPos = postings.get(i).getFilePos();
-                            builder.append(")(" + curPos + ":" + postings.get(i).getTermPos());
-                        }
-                        if (i == postings.size() - 1) {
-                            builder.append(")");
-                            builder.append(System.lineSeparator());
-                        }
-                    }
-                } else {
-                    builder.append(")");
-                    builder.append(System.lineSeparator());
-                }
-                bufferedWriter.write(builder.toString());
-                bufferedWriter.flush();
-
-                posBuffered.write((term + "=>" + posOfTerm[helper.checkPosDistributionRange(term)] + System.lineSeparator()).toString());
-                posOfTerm[helper.checkPosDistributionRange(term)]++;
-
-//                fileWriter.close();
-            }
-            bufferedWriter.close();
-            fileWriter.close();
-            posBuffered.close();
-            posWriter.close();
-//            helper.closeFile();
+//
+//        try {
+//            posWriter = new FileWriter("indexed/pos.txt", true);
+//            posBuffered = new BufferedWriter(posWriter);
+//            for (Map.Entry<String, List<Posting>> element : indexMap.entrySet()) {
+//                StringBuilder builder = new StringBuilder();
+//                String term = element.getKey();
+//                fileWriter = new FileWriter("indexed/" + checkDistributionRange(term).toString() + ".txt", true);
+//                bufferedWriter = new BufferedWriter(fileWriter); //helper.checkDistributionRange(term);
+//                int m = posOfTerm[helper.checkPosDistributionRange(term)];
+//                List<Posting> postings = element.getValue();
+//                builder.append(term + "=>");
+//                int curPos = postings.get(0).getFilePos();
+//                builder.append("(" + postings.get(0).getFilePos() + ":" + postings.get(0).getTermPos());
+//                if (postings.size() > 1) {
+//                    for (int i = 1; i < postings.size(); i++) {
+//                        if (postings.get(i).getFilePos() == curPos) {
+//                            builder.append("," + postings.get(i).getTermPos());
+//                        } else {
+//                            curPos = postings.get(i).getFilePos();
+//                            builder.append(")(" + curPos + ":" + postings.get(i).getTermPos());
+//                        }
+//                        if (i == postings.size() - 1) {
+//                            builder.append(")");
+//                            builder.append(System.lineSeparator());
+//                        }
+//                    }
+//                } else {
+//                    builder.append(")");
+//                    builder.append(System.lineSeparator());
+//                }
+//                bufferedWriter.write(builder.toString());
+//                bufferedWriter.flush();
+//
+//                posBuffered.write((term + "=>" + posOfTerm[helper.checkPosDistributionRange(term)] + System.lineSeparator()).toString());
+//                posOfTerm[helper.checkPosDistributionRange(term)]++;
+//
+////                fileWriter.close();
+//            }
 //            bufferedWriter.close();
 //            fileWriter.close();
-
-        } catch (IOException ex) {
-            Logger.getLogger(Indexing.class.getName()).log(Level.SEVERE, null, ex);
-        } finally {
-            System.out.println("Index saved");
-        }
-    }
-
+//            posBuffered.close();
+//            posWriter.close();
+////            helper.closeFile();
+////            bufferedWriter.close();
+////            fileWriter.close();
+//
+//        } catch (IOException ex) {
+//            Logger.getLogger(Indexing.class.getName()).log(Level.SEVERE, null, ex);
+//        } finally {
+//            System.out.println("Index saved");
+//        }
+//    }
     private String checkDistributionRange(String term) {
         // áàảãạăắặằẳẵâấầẩẫậđéèẻẽẹêếềểễệíìỉĩịóòỏõọôốồổỗộơớờởỡợúùủũụưứừửữựýỳỷỹỵÁÀẢÃẠĂẶẰẲẴÂẤẦẨẪẬĐÉÈẺẼẸÊẾỀỂỄỆÍÌỈĨỊÓÒỎÕỌÔỐỒỔỖỘƠỚỜỞỠỢÚÙỦŨỤƯỨỪỬỮỰÝỲỶỸỴ
 

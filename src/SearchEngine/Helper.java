@@ -251,7 +251,7 @@ public class Helper {
         }
         return null;
     }
-    
+
     public BufferedReader getDistributionRange(String term) {
         // áàảãạăắặằẳẵâấầẩẫậđéèẻẽẹêếềểễệíìỉĩịóòỏõọôốồổỗộơớờởỡợúùủũụưứừửữựýỳỷỹỵÁÀẢÃẠĂẶẰẲẴÂẤẦẨẪẬĐÉÈẺẼẸÊẾỀỂỄỆÍÌỈĨỊÓÒỎÕỌÔỐỒỔỖỘƠỚỜỞỠỢÚÙỦŨỤƯỨỪỬỮỰÝỲỶỸỴ
         try {
@@ -340,4 +340,68 @@ public class Helper {
         }
         return 7;
     }
+
+    public boolean isA_DFirst(String term) {
+        Pattern pattern = Pattern.compile("^[aáàảãạăắặằẳẵâấầẩẫậbcdđAÁÀẢÃẠĂẶẰẲẴÂẤẦẨẪBCD]");
+        Matcher m = pattern.matcher(term);
+        if (m.find()) {
+            return true;
+        }
+        return false;
+    }
+    
+    public boolean isE_HFirst(String term) {
+        Pattern pattern = Pattern.compile("^[eéèẻẽẹêếềểễệfghEÉÈẺẼẸÊẾỀỂỄỆFGH]");
+        Matcher m = pattern.matcher(term);
+        if (m.find()) {
+            return true;
+        }
+        return false;
+    }
+    
+    public boolean isI_LFirst(String term) {
+        Pattern pattern = Pattern.compile("^[iíìỉĩịjklIÍÌỈĨỊJKL]");
+        Matcher m = pattern.matcher(term);
+        if (m.find()) {
+            return true;
+        }
+        return false;
+    }
+    
+    public boolean isM_PFirst(String term) {
+        Pattern pattern = Pattern.compile("^[mnoóòỏõọôốồổỗộơớờởỡợpMNOÓÒỎÕỌÔỐỒỔỖỘƠỚỜỞỠỢ]");
+        Matcher m = pattern.matcher(term);
+        if (m.find()) {
+            return true;
+        }
+        return false;
+    }
+    
+    public boolean isQ_TFirst(String term) {
+        Pattern pattern = Pattern.compile("^[qrstQRST]");
+        Matcher m = pattern.matcher(term);
+        if (m.find()) {
+            return true;
+        }
+        return false;
+    }
+    
+    public boolean isX_ZFirst(String term) {
+        Pattern pattern = Pattern.compile("^[xyýỳỷỹỵzXYÝỲỶỸỴZ]");
+        Matcher m = pattern.matcher(term);
+        if (m.find()) {
+            return true;
+        }
+        return false;
+    }
+    
+    public boolean isU_WFirst(String term) {
+        Pattern pattern = Pattern.compile("^[uúùủũụưứừửữựvwUÚÙỦŨỤƯỨỪỬỮỰVW]");
+        Matcher m = pattern.matcher(term);
+        if (m.find()) {
+            return true;
+        }
+        return false;
+    }
+
 }
