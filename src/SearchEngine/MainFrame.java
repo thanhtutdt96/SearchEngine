@@ -103,7 +103,6 @@ public class MainFrame {
 //        index.clearIndexedFolder("indexed/");
         mainFrame.timeStart = System.currentTimeMillis();
         List<File> fileList = index.indexFileList("res/");
-
         if (!index.isIndexed("indexed/")) {
             index.buildIndex(fileList);
             index.saveFileList();
