@@ -164,11 +164,11 @@ public class Indexing {
             case "a-d":
                 setHashMap_a_d(hashMap);
                 break;
-                
+
             case "e-h":
                 setHashMap_e_h(hashMap);
                 break;
-                
+
             case "i-l":
                 setHashMap_i_l(hashMap);
                 break;
@@ -359,12 +359,12 @@ public class Indexing {
             new Thread(new Runnable() {
                 @Override
                 public void run() {
-            readBinFile(file.getName());
+                    readBinFile(file.getName());
                 }
             }
             ).start();
         }
-        
+
 //        try {
 //            Thread.sleep(3000);
 //        } catch (InterruptedException ex) {
@@ -372,7 +372,7 @@ public class Indexing {
 //        }
 //           printMap(hashMap_u_w);
     }
-    
+
     public void readBinFile(String fileName) {
         HashMap<String, List<Posting>> hashMap = new HashMap<>();
         FileInputStream fis = null;
@@ -544,76 +544,96 @@ public class Indexing {
     }
 
     public String retrieveIndex(String path, int position) {
-        File file = new File(path);
-        Scanner input = null;
+        String[] line = helper.readFileByExtenstions(path);
+        parser = Parser.getInstance();
         int noOfLetter = 20;
-        try {
-            input = new Scanner(file);
-        } catch (FileNotFoundException ex) {
-            Logger.getLogger(Indexing.class.getName()).log(Level.SEVERE, null, ex);
-        }
-
-        int count = 0;
+        boolean isFound = false;
+        int count = -1;
         int wordCount = 0;
         StringBuilder stringBuilder = new StringBuilder();
-
-        input.useDelimiter("\\s+");
-        if (position < noOfLetter) {
-            while (!input.hasNext("^[(<<\\w)|(\\w>>)]^[\\p{L}\\s\\d]")) {
-                stringBuilder.append(input.next() + " ");
-                count++;
-                if (count == position - 1) {
-                    stringBuilder.append("<b>");
-                }
-                if (count == position) {
-                    stringBuilder.append("</b>");
-                }
-                if (count == noOfLetter) {
-                    stringBuilder.append("...");
-                    break;
-                }
-            }
-        } else {
+        if (position > noOfLetter) {
             stringBuilder.append("...");
-            for (int i = 0; i <= position + noOfLetter; i++) {
-                if (i >= position - noOfLetter) {
-                    if (!input.hasNext("^[(<<\\w)|(\\w>>)]^[\\p{L}\\s\\d]")) {
-                        if (i == position - 1) {
-                            stringBuilder.append("<b>");
-                        }
-                        if (i == position) {
-                            stringBuilder.append("</b>");
-                        }
-                        stringBuilder.append(input.next() + " ");
+        }
+
+        for (int j = 0; j < line.length; j++) {
+
+            if (line[j].trim().length() == 0) {
+                continue;
+            }
+            if (parser.checkComment(line[j])) {
+                continue;
+            }
+            line[j] = line[j].replaceAll("(<<\\w)|(\\w>>)", " ");
+            line[j] = line[j].replaceAll("[^\\p{L}\\s\\d]", " ");
+            if (position < noOfLetter) {
+                for (String tmp : parser.removeSpace(line[j])) {
+
+                    if (excludeList.contains(tmp)) {
+                        continue;
                     }
-                } else {
-                    if (!input.hasNext("^[(<<\\w)|(\\w>>)]^[\\p{L}\\s\\d]")) {
-                        input.next();
+                    if (parser.checkRedundant(tmp)) {
+                        continue;
+                    }
+                    String term = parser.removeRedundantCharacters(tmp.toLowerCase());
+
+                    stringBuilder.append(tmp + " ");
+                    count++;
+                    if (count == position - 1) {
+                        stringBuilder.append("<b>");
+                    }
+                    if (count == position) {
+                        stringBuilder.append("</b>");
+                    }
+                    if (count == position + noOfLetter) {
+                        stringBuilder.append("...");
+                        break;
                     }
                 }
-            }
-            if (input.hasNext()) {
-                stringBuilder.append("...");
             } else {
-                stringBuilder.append(".");
+                for (String tmp : parser.removeSpace(line[j])) {
+
+                    if (excludeList.contains(tmp)) {
+                        continue;
+                    }
+                    if (parser.checkRedundant(tmp)) {
+                        continue;
+                    }
+                    String term = parser.removeRedundantCharacters(tmp.toLowerCase());
+                    count++;
+                    if (count <= position + noOfLetter) {
+                        if (count >= position - noOfLetter) {
+                            if (count == position - 1) {
+                                stringBuilder.append("<b>");
+                            }
+                            if (count == position) {
+                                stringBuilder.append("</b>");
+                            }
+                            stringBuilder.append(tmp + " ");
+                        }
+                    } else {
+                        if (tmp.equals(parser.removeSpace(line[j])[parser.removeSpace(line[j]).length - 1])) {
+                            stringBuilder.append("...");
+                            return stringBuilder.toString();
+                        } else {
+                            stringBuilder.append(".");
+                            return stringBuilder.toString();
+                        }
+                    }
+
+                }
             }
         }
         return stringBuilder.toString();
     }
 
     public String retrieveIndex(String path, List<Integer> position) {
-        File file = new File(path);
-        Scanner input = null;
+        String[] line = helper.readFileByExtenstions(path);
+        parser = Parser.getInstance();
         int noOfLetter = 20;
-        try {
-            input = new Scanner(file);
-        } catch (FileNotFoundException ex) {
-            Logger.getLogger(Indexing.class.getName()).log(Level.SEVERE, null, ex);
-        }
+        boolean isFound = false;
         int count = 0;
         int wordCount = 0;
         StringBuilder stringBuilder = new StringBuilder();
-//        input.useDelimiter("\\s(<<\\\\w)|(\\\\w>>)[^\\\\p{L}\\\\s\\\\d]");
         int posMin = position.get(1);
         int posMax = position.get(1);
         for (int i = 2; i < position.size(); i++) {
@@ -626,48 +646,80 @@ public class Indexing {
                 posMax = position.get(i);
             }
         }
-        if (posMin < noOfLetter) {
-            while (input.hasNext()) {
-                stringBuilder.append(input.next() + " ");
-                count++;
-                for (int i = 0; i < position.size(); i++) {
-                    if (count == position.get(i) - 1) {
-                        stringBuilder.append("<b>");
-                    }
-                    if (count == position.get(i)) {
-                        stringBuilder.append("</b>");
-                    }
-                }
-                if (count == noOfLetter) {
-                    stringBuilder.append("...");
-                    break;
-                }
-            }
-        } else {
+        if (posMin > noOfLetter) {
             stringBuilder.append("...");
-            for (int i = 0; i <= posMax + noOfLetter; i++) {
-                if (i >= posMin - noOfLetter) {
-                    if (input.hasNext()) {
-                        for (int j = 0; j < position.size(); j++) {
-                            if (i == position.get(j) - 1) {
-                                stringBuilder.append("<b>");
-                            }
-                            if (i == position.get(j)) {
-                                stringBuilder.append("</b>");
-                            }
-                        }
-                        stringBuilder.append(input.next() + " ");
+        }
+
+        for (int j = 0; j < line.length; j++) {
+
+            if (line[j].trim().length() == 0) {
+                continue;
+            }
+            if (parser.checkComment(line[j])) {
+                continue;
+            }
+            line[j] = line[j].replaceAll("(<<\\w)|(\\w>>)", " ");
+            line[j] = line[j].replaceAll("[^\\p{L}\\s\\d]", " ");
+            if (posMin < noOfLetter) {
+                for (String tmp : parser.removeSpace(line[j])) {
+
+                    if (excludeList.contains(tmp)) {
+                        continue;
                     }
-                } else {
-                    if (input.hasNext()) {
-                        input.next();
+                    if (parser.checkRedundant(tmp)) {
+                        continue;
+                    }
+                    String term = parser.removeRedundantCharacters(tmp.toLowerCase());
+
+                    stringBuilder.append(tmp + " ");
+                    count++;
+                    for (int i = 0; i < position.size(); i++) {
+                        if (count == position.get(i) - 1) {
+                            stringBuilder.append("<b>");
+                        }
+                        if (count == position.get(i)) {
+                            stringBuilder.append("</b>");
+                        }
+                        if (count == position.get(i) + noOfLetter) {
+                            stringBuilder.append("...");
+                            return stringBuilder.toString();
+                        }
                     }
                 }
-            }
-            if (input.hasNext()) {
-                stringBuilder.append("...");
             } else {
-                stringBuilder.append(".");
+                for (String tmp : parser.removeSpace(line[j])) {
+
+                    if (excludeList.contains(tmp)) {
+                        continue;
+                    }
+                    if (parser.checkRedundant(tmp)) {
+                        continue;
+                    }
+                    String term = parser.removeRedundantCharacters(tmp.toLowerCase());
+                    count++;
+                    if (count <= posMax + noOfLetter) {
+                        if (count >= posMin - noOfLetter) {
+                            for (int k = 0; k < position.size(); k++) {
+                                if (count == position.get(k) - 1) {
+                                    stringBuilder.append("<b>");
+                                }
+                                if (count == position.get(k)) {
+                                    stringBuilder.append("</b>");
+                                }
+                            }
+                            stringBuilder.append(tmp + " ");
+                        }
+                    } else {
+                        if (tmp.equals(parser.removeSpace(line[j])[parser.removeSpace(line[j]).length - 1])) {
+                            stringBuilder.append("...");
+                            return stringBuilder.toString();
+                        } else {
+                            stringBuilder.append(".");
+                            return stringBuilder.toString();
+                        }
+                    }
+
+                }
             }
         }
         return stringBuilder.toString();
@@ -720,16 +772,17 @@ public class Indexing {
 //        }
 //        return result.toString();
 //    }
-
     public String searchOne(String keyword) {
         String query = keyword.toLowerCase().split("(\\s|[.]|[,]|[:]|[?])+")[0];
         byte byteArray[] = query.getBytes();
         try {
             query = new String(byteArray, "UTF-8");
+
         } catch (UnsupportedEncodingException ex) {
-            Logger.getLogger(Indexing.class.getName()).log(Level.SEVERE, null, ex);
+            Logger.getLogger(Indexing.class
+                    .getName()).log(Level.SEVERE, null, ex);
         }
-        
+
         List<Posting> postingResult = getHashMapByTerm(query).get(query);
         StringBuilder result = new StringBuilder();
 
@@ -769,7 +822,7 @@ public class Indexing {
 //        }
 //        return result.toString();
     }
-    
+
     public String searchPhrase(String keyword) {
         phraseMap = new HashMap<>();
         String[] query = keyword.toLowerCase().split("\\s+");
@@ -882,7 +935,7 @@ public class Indexing {
             return result.toString();
         }
     }
-    
+
     public int calculateValue(List<Integer> posting) {
         int value = 0;
         for (int i = 1; i < posting.size() - 1; i++) {
@@ -894,10 +947,10 @@ public class Indexing {
         value += Math.abs(posting.get(posting.size() - 1) - posting.get(1));
         return value;
     }
-    
-    public void printMap(HashMap<String, List<Posting>> map){
-        for (Map.Entry<String, List<Posting>> entry: map.entrySet()){
-            System.out.println(entry.getKey()+"=>"+entry.getValue());
+
+    public void printMap(HashMap<String, List<Posting>> map) {
+        for (Map.Entry<String, List<Posting>> entry : map.entrySet()) {
+            System.out.println(entry.getKey() + "=>" + entry.getValue());
         }
     }
 
