@@ -651,7 +651,7 @@ public class Indexing {
         }
 
         for (int j = 0; j < line.length; j++) {
-
+//            line[j].concat(line[j+1]);
             if (line[j].trim().length() == 0) {
                 continue;
             }
@@ -699,6 +699,7 @@ public class Indexing {
                     count++;
                     if (count <= posMax + noOfLetter) {
                         if (count >= posMin - noOfLetter) {
+                            stringBuilder.append(tmp + " ");
                             for (int k = 0; k < position.size(); k++) {
                                 if (count == position.get(k) - 1) {
                                     stringBuilder.append("<b>");
@@ -707,7 +708,6 @@ public class Indexing {
                                     stringBuilder.append("</b>");
                                 }
                             }
-                            stringBuilder.append(tmp + " ");
                         }
                     } else {
                         if (tmp.equals(parser.removeSpace(line[j])[parser.removeSpace(line[j]).length - 1])) {
@@ -863,7 +863,7 @@ public class Indexing {
                         phraseResult.add(curPos);
                     }
                     Posting curPosting;
-                    for (int k = -5; k < 6; k++) {
+                    for (int k = -10; k < 11; k++) {
                         curPosting = new Posting(curFilePos, curPos + k);
                         if (postingResult.get(j).contains(curPosting)) {
                             if (!phraseResult.getTermPos().contains(curPosting.getTermPos())) {
@@ -895,7 +895,7 @@ public class Indexing {
             Collections.sort(valueList, new Comparator<Integer>() {
                 @Override
                 public int compare(Integer o1, Integer o2) {
-                    return o1 < o2 ? -1 : o1 == o2 ? 0 : 1;
+                    return o1 > o2 ? -1 : o1 == o2 ? 0 : 1;
                 }
             });
             if (hasResult == true) {
