@@ -18,4 +18,8 @@ public class Constants {
 //    public static final String REMOVE_REDUNDANT_CHAR_REGEX = "\\W+ăâđêôơưĂÂĐÊÔƠƯ[\\p{Punct}&&[^']]";
     public static final String REMOVE_REDUNDANT_CHAR_REGEX = "[^\\p{L}\\s\\d]";
     public static final String REMOVE_COMMENT_REGEX = "<!--.*-->";
+
+    public static final int MODE_OPEN = 0;
+    public static final int MODE_PAGE = 1;
+
 }

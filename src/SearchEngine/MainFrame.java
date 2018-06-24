@@ -144,7 +144,7 @@ public class MainFrame {
         btnSearch.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent ae) {
-                performSearch();
+                performSearch(0);
             }
         });
 
@@ -155,7 +155,7 @@ public class MainFrame {
 
             @Override
             public void keyPressed(KeyEvent ke) {
-                performSearch();
+                performSearch(0);
             }
 
             @Override
@@ -209,18 +209,28 @@ public class MainFrame {
         txtResult = new JTextPane();
         txtResult.setContentType("text/html");
         txtResult.setEditable(false);
+//        txtResult.addHyperlinkListener(new LinkHandler(MODE_)
         txtResult.addHyperlinkListener(new HyperlinkListener() {
             @Override
             public void hyperlinkUpdate(HyperlinkEvent e) {
                 if (e.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
-                    if (Desktop.isDesktopSupported()) {
-                        try {
-                            Desktop.getDesktop().browse(e.getURL().toURI());
-                        } catch (URISyntaxException ex) {
-                            Logger.getLogger(MainFrame.class.getName()).log(Level.SEVERE, null, ex);
-                        } catch (IOException ex) {
-                            Logger.getLogger(MainFrame.class.getName()).log(Level.SEVERE, null, ex);
+                    try {
+                        char lastCharacter = e.getURL().toURI().toString().charAt(e.getURL().toURI().toString().length() - 1);
+                        if (Character.isDigit(lastCharacter)) {
+                            String keyword = txtSearch.getText().toString();
+                            int pageNumber=Character.getNumericValue(lastCharacter);
+                            performSearch(pageNumber);
+                        } else {
+                            if (Desktop.isDesktopSupported()) {
+
+                                Desktop.getDesktop().browse(e.getURL().toURI());
+
+                            }
                         }
+                    } catch (URISyntaxException ex) {
+                        Logger.getLogger(MainFrame.class.getName()).log(Level.SEVERE, null, ex);
+                    } catch (IOException ex) {
+                        Logger.getLogger(MainFrame.class.getName()).log(Level.SEVERE, null, ex);
                     }
                 }
             }
@@ -230,7 +240,7 @@ public class MainFrame {
         frmMain.getContentPane().add(scrollPane);
     }
 
-    private void performSearch() {
+    private void performSearch(int pageNumber) {
         new Thread(new Runnable() {
             @Override
             public void run() {
@@ -242,7 +252,7 @@ public class MainFrame {
 //                    txtResult.setText(index.searchOne(keyword));
 //                }
                 if (keyword.length() > 1) {
-                    txtResult.setText(index.performSearch(keyword));
+                    txtResult.setText(index.performSearch(keyword,pageNumber));
                 }
             }
         }).start();
