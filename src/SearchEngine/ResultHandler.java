@@ -33,16 +33,42 @@ public class ResultHandler {
         return false;
     }
 
-    public String appendSearchPages(List<Posting> results) {
+    public String appendSearchPages(int size) {
         StringBuilder builder = new StringBuilder();
-        for(int i=0; i< results.size(); i++)
-        {
-            if(i%10==0)
-            {   int pageNumber=i/10;
-                builder.append("<a href='file:///C:/" +pageNumber+ "'>" + pageNumber + "</a>"+"&nbsp");
+        int start = 0;
+        int end = 10;
+        if (end > size / 10) {
+            end = size / 10;
+        }
+        builder.append("<div style='text-align: center;'>");
+        if (MainFrame.currentPage > 5) {
+            start = MainFrame.currentPage - 6;
+            end = MainFrame.currentPage + 5;
+            if (end > size / 10) {
+                end = size / 10;
             }
         }
+        for (int i = start; i < end; i++) {
+            if (i == MainFrame.currentPage) {
+                builder.append("<b>" + (i + 1) + "</b>&nbsp&nbsp");
+            } else {
+                builder.append("<a href='file:///C:/" + (i + 1) + "'>" + (i + 1) + "</a>" + "&nbsp&nbsp");
+            }
+            if (i == (size / 10 - 1) && (size % 10 != 0)) {
+                builder.append("<a href='file:///C:/" + (size / 10 + 1) + "'>" + (size / 10 + 1) + "</a>" + "&nbsp&nbsp");
+
+            }
+        }
+        builder.append("</div>");
         return builder.toString();
+    }
+
+    public int getPostingsSize(List<Postings> results) {
+        int size = 0;
+        for (int i = 0; i < results.size(); i++) {
+            size += results.get(i).getSize();
+        }
+        return size;
     }
 
     public boolean isLastPage(int firstRow, int lastRow) {

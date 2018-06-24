@@ -348,7 +348,7 @@ public class Helper {
         }
         return false;
     }
-    
+
     public boolean isE_HFirst(String term) {
         Pattern pattern = Pattern.compile("^[eéèẻẽẹêếềểễệfghEÉÈẺẼẸÊẾỀỂỄỆFGH]");
         Matcher m = pattern.matcher(term);
@@ -357,7 +357,7 @@ public class Helper {
         }
         return false;
     }
-    
+
     public boolean isI_LFirst(String term) {
         Pattern pattern = Pattern.compile("^[iíìỉĩịjklIÍÌỈĨỊJKL]");
         Matcher m = pattern.matcher(term);
@@ -366,7 +366,7 @@ public class Helper {
         }
         return false;
     }
-    
+
     public boolean isM_PFirst(String term) {
         Pattern pattern = Pattern.compile("^[mnoóòỏõọôốồổỗộơớờởỡợpMNOÓÒỎÕỌÔỐỒỔỖỘƠỚỜỞỠỢ]");
         Matcher m = pattern.matcher(term);
@@ -375,7 +375,7 @@ public class Helper {
         }
         return false;
     }
-    
+
     public boolean isQ_TFirst(String term) {
         Pattern pattern = Pattern.compile("^[qrstQRST]");
         Matcher m = pattern.matcher(term);
@@ -384,7 +384,7 @@ public class Helper {
         }
         return false;
     }
-    
+
     public boolean isX_ZFirst(String term) {
         Pattern pattern = Pattern.compile("^[xyýỳỷỹỵzXYÝỲỶỸỴZ]");
         Matcher m = pattern.matcher(term);
@@ -393,7 +393,7 @@ public class Helper {
         }
         return false;
     }
-    
+
     public boolean isU_WFirst(String term) {
         Pattern pattern = Pattern.compile("^[uúùủũụưứừửữựvwUÚÙỦŨỤƯỨỪỬỮỰVW]");
         Matcher m = pattern.matcher(term);
@@ -401,6 +401,15 @@ public class Helper {
             return true;
         }
         return false;
+    }
+
+    public static boolean isNumeric(String str) {
+        for (char c : str.toCharArray()) {
+            if (!Character.isDigit(c)) {
+                return false;
+            }
+        }
+        return true;
     }
 
 }

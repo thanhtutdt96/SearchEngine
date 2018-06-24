@@ -2,14 +2,10 @@ package SearchEngine;
 
 import java.awt.Desktop;
 import java.awt.Font;
-import java.awt.Insets;
-import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
-import java.awt.event.WindowAdapter;
-import java.awt.event.WindowEvent;
 import java.io.File;
 import java.io.IOException;
 import java.net.URISyntaxException;
@@ -27,7 +23,6 @@ import javax.swing.JTextPane;
 import javax.swing.WindowConstants;
 import javax.swing.event.HyperlinkEvent;
 import javax.swing.event.HyperlinkListener;
-import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
 
 public class MainFrame {
 
@@ -44,6 +39,8 @@ public class MainFrame {
     private JLabel lblResult;
     long timeStart;
     long timeEnd;
+
+    public static int currentPage = 0;
 
     /* Dimension values */
     private static final int MAIN_FORM_WIDTH = 535;
@@ -144,7 +141,7 @@ public class MainFrame {
         btnSearch.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent ae) {
-                performSearch(0);
+                performSearch(1);
             }
         });
 
@@ -155,7 +152,7 @@ public class MainFrame {
 
             @Override
             public void keyPressed(KeyEvent ke) {
-                performSearch(0);
+                performSearch(1);
             }
 
             @Override
@@ -209,22 +206,20 @@ public class MainFrame {
         txtResult = new JTextPane();
         txtResult.setContentType("text/html");
         txtResult.setEditable(false);
-//        txtResult.addHyperlinkListener(new LinkHandler(MODE_)
         txtResult.addHyperlinkListener(new HyperlinkListener() {
             @Override
             public void hyperlinkUpdate(HyperlinkEvent e) {
                 if (e.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
                     try {
-                        char lastCharacter = e.getURL().toURI().toString().charAt(e.getURL().toURI().toString().length() - 1);
-                        if (Character.isDigit(lastCharacter)) {
+                        String lastNumber = e.getURL().toURI().toString().substring(e.getURL().toURI().toString().lastIndexOf("/") + 1);
+                        if (Helper.isNumeric(lastNumber)) {
                             String keyword = txtSearch.getText().toString();
-                            int pageNumber=Character.getNumericValue(lastCharacter);
-                            performSearch(pageNumber);
+                            int pageNumber = Integer.parseInt(lastNumber);
+                            currentPage = pageNumber - 1;
+                            performSearch(pageNumber);                         
                         } else {
                             if (Desktop.isDesktopSupported()) {
-
                                 Desktop.getDesktop().browse(e.getURL().toURI());
-
                             }
                         }
                     } catch (URISyntaxException ex) {
@@ -246,13 +241,9 @@ public class MainFrame {
             public void run() {
                 String keyword = txtSearch.getText().toString();
                 String[] tokens = keyword.split("\\s+");
-//                if (tokens.length > 1) {
-//                    txtResult.setText(index.searchPhrase(keyword));
-//                } else {
-//                    txtResult.setText(index.searchOne(keyword));
-//                }
+
                 if (keyword.length() > 1) {
-                    txtResult.setText(index.performSearch(keyword,pageNumber));
+                    txtResult.setText(index.performSearch(keyword, pageNumber));
                 }
             }
         }).start();

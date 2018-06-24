@@ -483,9 +483,7 @@ public class Indexing {
         String[] line = helper.readFileByExtenstions(path);
         parser = Parser.getInstance();
         int noOfLetter = 20;
-        boolean isFound = false;
         int count = -1;
-        int wordCount = 0;
         StringBuilder stringBuilder = new StringBuilder();
         if (position > noOfLetter) {
             stringBuilder.append("...");
@@ -670,18 +668,23 @@ public class Indexing {
             Logger.getLogger(Indexing.class.getName()).log(Level.SEVERE, null, ex);
         }
 
-        List<Posting> pResult = getHashMapByTerm(query).get(query);
+        List<Posting> postingResult = getHashMapByTerm(query).get(query);
         StringBuilder result = new StringBuilder();
 
         handler = ResultHandler.getInstance();
-        if (pageNumber >= 0) {
-            int firstRow = pageNumber * 10;
+        if (pageNumber - 1 >= 0) {
+            int firstRow = (pageNumber - 1) * 10;
             int lastRow = firstRow + 10;
-            List<Posting> postingResult = pResult.subList(firstRow, lastRow);
+            if (lastRow > postingResult.size() - 1) {
+                lastRow = postingResult.size() - 1;
+            }
+//            List<Posting> postingResult = pResult.subList(firstRow, lastRow);
 
             if (postingResult != null) {
-                result.append("<b style='font-size: 130%'>*** " + postingResult.size() + " results matched ***</b>");
-                for (int i = 0; i < postingResult.size(); i++) {
+                result.append("<div style='text-align: center;'><b style='font-size: 130%'>*** " + postingResult.size() + " results matched ***</b></div>");
+                result.append("<div><b style='font-size: 110%; color:red'><---- Page: " + pageNumber + " ----</b></div>");
+
+                for (int i = firstRow; i < lastRow; i++) {
                     String innerDoc = retrieveIndex(fileList.get(postingResult.get(i).getFilePos()).getPath(), postingResult.get(i).getTermPos());
                     String fileName = fileList.get(postingResult.get(i).getFilePos()).getName();
                     result.append("<p style='color: blue; font-size= 130%'>\"<b>"
@@ -693,13 +696,13 @@ public class Indexing {
             } else {
                 result.append("No matches found");
             }
-            result.append(handler.appendSearchPages(pResult));
+            result.append(handler.appendSearchPages(postingResult.size()));
         }
 
         return result.toString();
     }
 
-    public String searchPhrase(String keyword) {
+    public String searchPhrase(String keyword, int pageNumber) {
         handler = ResultHandler.getInstance();
 
         phraseMap = new HashMap<>();
@@ -727,7 +730,7 @@ public class Indexing {
             }
         }
         if (lengthOfPhrase == 1) {
-            return searchOne(meaningfulWords.get(0), 0);
+            return searchOne(meaningfulWords.get(0), 1);
         } else {
             List<Posting> initialList = postingResult.get(0);
             for (int i = 0; i < initialList.size(); i++) {
@@ -776,36 +779,53 @@ public class Indexing {
                     return o1 < o2 ? -1 : o1 == o2 ? 0 : 1;
                 }
             });
+            int count = 0;
+            boolean isFound = false;
+            int size = 0;
+            handler = ResultHandler.getInstance();
             if (hasResult == true) {
                 int noOfResults = 0;
                 for (int i = 0; i < valueList.size(); i++) {
                     noOfResults += phraseMap.get(valueList.get(i)).size();
                 }
-                result.append("<b style='font-size: 130%'>*** " + noOfResults + " results matched ***</b>");
+                result.append("<div><b style='font-size: 130%'>*** " + noOfResults + " results matched ***</b></div>");
+                result.append("<b style='font-size: 110%, color:'red'>---- Page: " + pageNumber + " ----</b>");
+
                 for (int i = 0; i < valueList.size(); i++) {
                     String innerDoc;
                     List<Postings> termsPos = phraseMap.get(valueList.get(i));
                     for (int j = 0; j < termsPos.size(); j++) {
-                        String fileName = fileList.get(termsPos.get(j).getFilePos()).getName();
-                        String filePath = fileList.get(termsPos.get(j).getFilePos()).getPath();
-                        innerDoc = retrieveIndex(filePath, termsPos.get(j).getTermPos());
-                        result.append("<p style='color: blue; font-size= 130%'>\"<b>"
-                                + "<a href='file:///" + fileList.get(termsPos.get(j).getFilePos()).getAbsolutePath() + "'>" + fileName + "</a>"
-                                + "\"</b>, <em>Position:</em> ");
-                        Collections.sort(termsPos.get(j).getTermPos(), new Comparator<Integer>() {
-                            @Override
-                            public int compare(Integer o1, Integer o2) {
-                                return o1 < o2 ? -1 : o1 == o2 ? 0 : 1;
+                        count++;
+                        if (count >= pageNumber * 10) {
+                            String fileName = fileList.get(termsPos.get(j).getFilePos()).getName();
+                            String filePath = fileList.get(termsPos.get(j).getFilePos()).getPath();
+                            innerDoc = retrieveIndex(filePath, termsPos.get(j).getTermPos());
+                            result.append("<p style='color: blue; font-size= 130%'>\"<b>"
+                                    + "<a href='file:///" + fileList.get(termsPos.get(j).getFilePos()).getAbsolutePath() + "'>" + fileName + "</a>"
+                                    + "\"</b>, <em>Position:</em> ");
+                            Collections.sort(termsPos.get(j).getTermPos(), new Comparator<Integer>() {
+                                @Override
+                                public int compare(Integer o1, Integer o2) {
+                                    return o1 < o2 ? -1 : o1 == o2 ? 0 : 1;
+                                }
+                            });
+                            for (int k = 0; k < termsPos.get(j).getTermPos().size() - 1; k++) {
+                                result.append(termsPos.get(j).getTermPos().get(k) + " & ");
                             }
-                        });
-                        for (int k = 0; k < termsPos.get(j).getTermPos().size() - 1; k++) {
-                            result.append(termsPos.get(j).getTermPos().get(k) + " & ");
+                            result.append(termsPos.get(j).getTermPos().get(termsPos.get(j).getTermPos().size() - 1));
+                            result.append("<div>" + innerDoc + "</div></p>");
+                            if (count == pageNumber * 10 + 10) {
+                                isFound = true;
+                            }
                         }
-                        result.append(termsPos.get(j).getTermPos().get(termsPos.get(j).getTermPos().size() - 1));
-                        result.append("<div>" + innerDoc + "</div></p>");
                     }
+                    if (isFound) {
+                        break;
+                    }
+                    size+=handler.getPostingsSize(termsPos);
                 }
                 result.append("<br/>");
+                result.append(handler.appendSearchPages(size));
             } else {
                 result.append("No matches found");
             }
@@ -863,7 +883,7 @@ public class Indexing {
         if (tokens.length == 1) {
             return searchOne(tokens[0], pageNumber);
         } else {
-            return searchPhrase(word);
+            return searchPhrase(word, pageNumber);
         }
     }
 
@@ -883,6 +903,7 @@ public class Indexing {
                 tempPos.add(pos);
             }
             bR.close();
+
         } catch (FileNotFoundException ex) {
             Logger.getLogger(Indexing.class
                     .getName()).log(Level.SEVERE, null, ex);
