@@ -42,6 +42,16 @@ public class Indexing {
     public HashMap<String, List<Posting>> hashMap_x_z;
     public HashMap<String, List<Posting>> hashMap_other;
 
+    Pattern pattern1 = Pattern.compile("^[aáàảãạăắặằẳẵâấầẩẫậbcdđAÁÀẢÃẠĂẶẰẲẴÂẤẦẨẪBCD]");
+    Pattern pattern2 = Pattern.compile("^[eéèẻẽẹêếềểễệfghEÉÈẺẼẸÊẾỀỂỄỆFGH]");
+    Pattern pattern3 = Pattern.compile("^[iíìỉĩịjklIÍÌỈĨỊJKL]");
+    Pattern pattern4 = Pattern.compile("^[mnoóòỏõọôốồổỗộơớờởỡợpMNOÓÒỎÕỌÔỐỒỔỖỘƠỚỜỞỠỢ]");
+    Pattern pattern5 = Pattern.compile("^[qrstQRST]");
+    Pattern pattern6 = Pattern.compile("^[uúùủũụưứừửữựvwUÚÙỦŨỤƯỨỪỬỮỰVW]");
+    Pattern pattern7 = Pattern.compile("^[xyýỳỷỹỵzXYÝỲỶỸỴZ]");
+
+    Matcher m;
+
     public static ResultHandler handler = null;
 
     public void setHashMap_a_d(HashMap<String, List<Posting>> hashMap_a_d) {
@@ -199,9 +209,11 @@ public class Indexing {
     public void buildIndex(List<File> files) {
         parser = Parser.getInstance();
         initContainer();
+        String filePath;
+        String[] line;
 
         for (int i = 0; i < files.size(); i++) {
-            String filePath = files.get(i).getAbsolutePath();
+            filePath = files.get(i).getAbsolutePath();
             int termPos = 0;
             int filePos = fileList.indexOf(files.get(i));
             if (filePos == -1) {
@@ -210,7 +222,7 @@ public class Indexing {
             }
 
             helper = Helper.getInstance();
-            String[] line = helper.readFileByExtenstions(filePath);
+            line = helper.readFileByExtenstions(filePath);
             for (int j = 0; j < line.length; j++) {
 
                 if (line[j].trim().length() == 0) {
@@ -414,38 +426,31 @@ public class Indexing {
     private String checkDistributionRange(String term) {
         // áàảãạăắặằẳẵâấầẩẫậđéèẻẽẹêếềểễệíìỉĩịóòỏõọôốồổỗộơớờởỡợúùủũụưứừửữựýỳỷỹỵÁÀẢÃẠĂẶẰẲẴÂẤẦẨẪẬĐÉÈẺẼẸÊẾỀỂỄỆÍÌỈĨỊÓÒỎÕỌÔỐỒỔỖỘƠỚỜỞỠỢÚÙỦŨỤƯỨỪỬỮỰÝỲỶỸỴ
 
-        Pattern pattern = Pattern.compile("^[aáàảãạăắặằẳẵâấầẩẫậbcdđAÁÀẢÃẠĂẶẰẲẴÂẤẦẨẪBCD]");
-        Matcher m = pattern.matcher(term);
+        m = pattern1.matcher(term);
         if (m.find()) {
             return "a-d";
         }
-        pattern = Pattern.compile("^[eéèẻẽẹêếềểễệfghEÉÈẺẼẸÊẾỀỂỄỆFGH]");
-        m = pattern.matcher(term);
+        m = pattern2.matcher(term);
         if (m.find()) {
             return "e-h";
         }
-        pattern = Pattern.compile("^[iíìỉĩịjklIÍÌỈĨỊJKL]");
-        m = pattern.matcher(term);
+        m = pattern3.matcher(term);
         if (m.find()) {
             return "i-l";
         }
-        pattern = Pattern.compile("^[mnoóòỏõọôốồổỗộơớờởỡợpMNOÓÒỎÕỌÔỐỒỔỖỘƠỚỜỞỠỢ]");
-        m = pattern.matcher(term);
+        m = pattern4.matcher(term);
         if (m.find()) {
             return "m-p";
         }
-        pattern = Pattern.compile("^[qrstQRST]");
-        m = pattern.matcher(term);
+        m = pattern5.matcher(term);
         if (m.find()) {
             return "q-t";
         }
-        pattern = Pattern.compile("^[uúùủũụưứừửữựvwUÚÙỦŨỤƯỨỪỬỮỰVW]");
-        m = pattern.matcher(term);
+        m = pattern6.matcher(term);
         if (m.find()) {
             return "u-w";
         }
-        pattern = Pattern.compile("^[xyýỳỷỹỵzXYÝỲỶỸỴZ]");
-        m = pattern.matcher(term);
+        m = pattern7.matcher(term);
         if (m.find()) {
             return "x-z";
         }
@@ -822,7 +827,7 @@ public class Indexing {
                     if (isFound) {
                         break;
                     }
-                    size+=handler.getPostingsSize(termsPos);
+                    size += handler.getPostingsSize(termsPos);
                 }
                 result.append("<br/>");
                 result.append(handler.appendSearchPages(size));

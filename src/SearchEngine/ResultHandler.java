@@ -42,13 +42,13 @@ public class ResultHandler {
         }
         builder.append("<div style='text-align: center;'>");
         if (MainFrame.currentPage > 5) {
-            start = MainFrame.currentPage - 6;
+            start = MainFrame.currentPage - 5;
             end = MainFrame.currentPage + 5;
             if (end > size / 10) {
                 end = size / 10;
             }
         }
-        for (int i = start; i < end; i++) {
+        for (int i = start; i <= end; i++) {
             if (i == MainFrame.currentPage) {
                 builder.append("<b>" + (i + 1) + "</b>&nbsp&nbsp");
             } else {

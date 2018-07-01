@@ -216,7 +216,7 @@ public class MainFrame {
                             String keyword = txtSearch.getText().toString();
                             int pageNumber = Integer.parseInt(lastNumber);
                             currentPage = pageNumber - 1;
-                            performSearch(pageNumber);                         
+                            performSearch(pageNumber);
                         } else {
                             if (Desktop.isDesktopSupported()) {
                                 Desktop.getDesktop().browse(e.getURL().toURI());
@@ -248,4 +248,5 @@ public class MainFrame {
             }
         }).start();
     }
+
 }
