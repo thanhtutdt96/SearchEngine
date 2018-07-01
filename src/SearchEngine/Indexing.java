@@ -2,8 +2,6 @@ package SearchEngine;
 
 import Tokenizer.Parser;
 import Constant.Constants;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
@@ -24,7 +22,6 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Scanner;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.prefs.Preferences;
@@ -235,17 +232,23 @@ public class Indexing {
                 line[j] = line[j].replaceAll("[^\\p{L}\\s\\d]", " ");
                 for (String tmp : parser.removeSpace(line[j])) {
 
-                    if (excludeList.contains(tmp)) {
+                    if (excludeList.contains(tmp)){
                         continue;
                     }
+                    
                     if (parser.checkRedundant(tmp)) {
                         continue;
                     }
                     System.out.println(tmp);
                     String term = parser.removeRedundantCharacters(tmp.toLowerCase());
 
+                    if (Constants.STOP_WORDS.contains(term)) {
+                        if(getHashMapByTerm(term).get(term) != null){
+                            continue;
+                        }
+                    }
                     termPos++;
-
+                    
                     List<Posting> postings = getHashMapByTerm(term).get(term);
                     if (postings == null) {
                         postings = new ArrayList<>();

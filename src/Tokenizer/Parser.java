@@ -9,6 +9,8 @@ import java.util.regex.Pattern;
 public class Parser {
 
     private static Parser instance = null;
+    Pattern pattern1 = Pattern.compile("<<\\w");
+    Pattern pattern2 = Pattern.compile(REMOVE_COMMENT_REGEX);
 
     public static Parser getInstance() {
         if (instance == null) {
@@ -26,18 +28,14 @@ public class Parser {
     }
 
     public boolean checkRedundant(String word) {
-        Pattern pattern = Pattern.compile("<<\\w");
-        Matcher matcher = pattern.matcher(word);
-        while (matcher.find()) {
+        while (pattern1.matcher(word).find()) {
             return true;
         }
         return false;
     }
 
     public boolean checkComment(String word) {
-        Pattern pattern = Pattern.compile(REMOVE_COMMENT_REGEX);
-        Matcher matcher = pattern.matcher(word);
-        while (matcher.find()) {
+        while (pattern2.matcher(word).find()) {
             return true;
         }
         return false;
