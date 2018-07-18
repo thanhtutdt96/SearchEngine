@@ -3,11 +3,16 @@
     <editor-bookmarks xmlns="http://www.netbeans.org/ns/editor-bookmarks/2" lastBookmarkId="0"/>
     <open-files xmlns="http://www.netbeans.org/ns/projectui-open-files/2">
         <group>
-            <file>file:/C:/Users/1stks/Documents/NetBeansProjects/SearchEngine/src/SearchEngine/ResultHandler.java</file>
-            <file>file:/C:/Users/1stks/Documents/NetBeansProjects/SearchEngine/src/SearchEngine/Postings.java</file>
-            <file>file:/C:/Users/1stks/Documents/NetBeansProjects/SearchEngine/src/SearchEngine/MainFrame.java</file>
-            <file>file:/C:/Users/1stks/Documents/NetBeansProjects/SearchEngine/src/SearchEngine/Helper.java</file>
-            <file>file:/C:/Users/1stks/Documents/NetBeansProjects/SearchEngine/src/SearchEngine/Indexing.java</file>
+            <file>file:/C:/Users/Win%208.1%20VS8%20X64/Documents/GitHub/SearchEngine/src/SearchEngine/Helper.java</file>
+            <file>file:/C:/Users/Win%208.1%20VS8%20X64/Documents/GitHub/SearchEngine/src/SearchEngine/PageHandler.java</file>
+            <file>file:/C:/Users/Win%208.1%20VS8%20X64/Documents/GitHub/SearchEngine/src/Tokenizer/Parser.java</file>
+            <file>file:/C:/Users/Win%208.1%20VS8%20X64/Documents/GitHub/SearchEngine/src/Constant/Path.java</file>
+            <file>file:/C:/Users/Win%208.1%20VS8%20X64/Documents/GitHub/SearchEngine/src/Constant/Constants.java</file>
+            <file>file:/C:/Users/Win%208.1%20VS8%20X64/Documents/GitHub/SearchEngine/src/SearchEngine/Postings.java</file>
+            <file>file:/C:/Users/Win%208.1%20VS8%20X64/Documents/GitHub/SearchEngine/src/SearchEngine/Posting.java</file>
+            <file>file:/C:/Users/Win%208.1%20VS8%20X64/Documents/GitHub/SearchEngine/src/SearchEngine/MainFrame.java</file>
+            <file>file:/C:/Users/Win%208.1%20VS8%20X64/Documents/GitHub/SearchEngine/src/SearchEngine/ResultHandler.java</file>
+            <file>file:/C:/Users/Win%208.1%20VS8%20X64/Documents/GitHub/SearchEngine/src/SearchEngine/Indexing.java</file>
         </group>
     </open-files>
 </project-private>

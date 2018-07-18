@@ -56,7 +56,7 @@ public class ResultHandler {
             }
             if (i == (size / 10 - 1) && (size % 10 != 0)) {
                 builder.append("<a href='file:///C:/" + (size / 10 + 1) + "'>" + (size / 10 + 1) + "</a>" + "&nbsp&nbsp");
-
+                break;
             }
         }
         builder.append("</div>");

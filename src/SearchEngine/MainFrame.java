@@ -9,6 +9,7 @@ import java.awt.event.KeyListener;
 import java.io.File;
 import java.io.IOException;
 import java.net.URISyntaxException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -23,6 +24,7 @@ import javax.swing.JTextPane;
 import javax.swing.WindowConstants;
 import javax.swing.event.HyperlinkEvent;
 import javax.swing.event.HyperlinkListener;
+import javax.swing.filechooser.FileNameExtensionFilter;
 
 public class MainFrame {
 
@@ -32,15 +34,17 @@ public class MainFrame {
     private JButton btnSearch;
     private JButton btnBrowse;
     private JButton btnClear;
-    private JTextPane txtResult;
+    public JTextPane txtResult;
     private JScrollPane scrollPane;
     private JLabel lblSearchText;
     private JLabel lblPath;
     private JLabel lblResult;
     long timeStart;
     long timeEnd;
-
+    boolean isFile = false;
+    List<File> fileList = new ArrayList<>();
     public static int currentPage = 0;
+    private static MainFrame instance = null;
 
     /* Dimension values */
     private static final int MAIN_FORM_WIDTH = 535;
@@ -93,22 +97,35 @@ public class MainFrame {
         initialize();
     }
 
+    public static MainFrame getInstance() {
+        if (instance == null) {
+            instance = new MainFrame();
+        }
+        return instance;
+    }
+
     public static void main(String args[]) {
         MainFrame mainFrame = new MainFrame();
         mainFrame.frmMain.setVisible(true);
 
 //        index.clearIndexedFolder("indexed/");
         mainFrame.timeStart = System.currentTimeMillis();
-        List<File> fileList = index.indexFileList("res/");
-        if (!index.isIndexed("indexed/")) {
-            index.buildIndex(fileList);
-            index.saveFileList();
-            index.saveAllIndex();
-        } else {
-//            index.printMap();
-//            index.readIndex();
-//            index.readFileList();
+//        List<File> fileList = index.indexFileList("res/");
+//        if (!index.isIndexed("indexed/")) {
+//            index.buildIndex(fileList);
+//            index.saveFileList();
+//            index.saveAllIndex();
+//        } else {
+////            index.printMap();
+////            index.readIndex();
+////            index.readFileList();
+//            index.loadAllIndexFiles();
+//        }
+        if (index.isIndexed("indexed/")) {
+            mainFrame.txtResult.setText("Loading index ...");
+            index.readFileList();
             index.loadAllIndexFiles();
+            mainFrame.txtResult.setText("Done");
         }
         mainFrame.timeEnd = System.currentTimeMillis();
         System.out.println("Running time: " + (mainFrame.timeEnd - mainFrame.timeStart) / 1000);
@@ -167,48 +184,102 @@ public class MainFrame {
             @Override
             public void actionPerformed(ActionEvent ae) {
                 JFileChooser chooser = new JFileChooser();
+                chooser.setFileSelectionMode(JFileChooser.FILES_AND_DIRECTORIES);
+                chooser.setFileFilter(new FileNameExtensionFilter("Text files", "doc", "docx", "txt", "xls", "xlsx"));
+                chooser.setMultiSelectionEnabled(true);
                 chooser.setCurrentDirectory(new java.io.File("./src/"));
                 chooser.setDialogTitle("Select your index folder...");
-                chooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
                 chooser.setAcceptAllFileFilterUsed(false);
 
                 if (chooser.showOpenDialog(null) == JFileChooser.APPROVE_OPTION) {
-//                    System.out.println("getCurrentDirectory(): " + chooser.getCurrentDirectory());
-                    String folderPath = chooser.getSelectedFile().getAbsolutePath();
-                    lblPath.setText("Folder: " + folderPath);
-                    List<File> fileList = index.indexFileList(folderPath);
-                    index.buildIndex(fileList);
-//                    index.saveIndex();
-                    index.saveFileList();
-//                    index.saveFolderPath(folderPath);
+                    if (index.fileList != null) {
+                        if (index.fileList.contains(chooser.getSelectedFile())) {
+                            txtResult.setText("This file has been indexed!");
+                            return;
+                        }
+                    }
+                    if (chooser.getSelectedFile().isFile()) {
+                        File[] files = chooser.getSelectedFiles();
+                        String[] folderPath = new String[chooser.getSelectedFiles().length];
+                        for (int i = 0; i < files.length; i++) {
+                            folderPath[i] = files[i].getAbsolutePath();
+                        }
+                        fileList = index.indexFileList(folderPath, true);
+                        if (!index.isIndexed("indexed/")) {
+                            index.initContainer();
+                            index.buildIndex(fileList);
+                            index.saveAllIndex();
+                            index.saveFileList();
+                        } else {
+                            index.addFileList(fileList);
+                            index.buildIndex(fileList);
+                            index.mergeIndex();
+                            index.saveFileList();
+                        }
+                    } else if (chooser.getSelectedFile().isDirectory()) {
+                        String[] folderPath = new String[1];
+                        folderPath[0] = chooser.getSelectedFile().getAbsolutePath();
+                        lblPath.setText("Folder: " + folderPath);
+                        for (int i = 0; i < fileList.size(); i++) {
+                            System.out.println(fileList.get(i).getName());
+                        }
+                        fileList = index.indexFileList(folderPath, false);
+                        if (!index.isIndexed("indexed/")) {
+                            index.initContainer();
+                            index.buildIndex(fileList);
+                            index.saveAllIndex();
+                            index.saveFileList();
+                        } else {
+                            index.addFileList(fileList);
+                            index.buildIndex(fileList);
+                            index.mergeIndex();
+                            index.saveFileList();
+                        }
+                    }
                 } else {
-                    System.out.println("No Selection ");
+                    System.out.println("No Selection");
                 }
             }
-        });
+        }
+        );
 
         btnClear = new JButton(new ImageIcon(getClass().getResource("/Image/Clear.png")));
+
         btnClear.setBounds(BTN_CLEAR_X, BTN_CLEAR_Y, BTN_CLEAR_WIDTH, BTN_CLEAR_HEIGHT);
-        frmMain.getContentPane().add(btnClear);
+
+        frmMain.getContentPane()
+                .add(btnClear);
 
 //        if (Preferences.userRoot().node(Constants.PREF_NAME).get(Constants.FOLDER_PATH, "").equals("")) {
         lblPath = new JLabel("Folder: " + index.getDefaultPath());
 //            index.saveFolderPath(index.getDefaultPath());
 //        }
+
         lblPath.setBounds(LBL_PATH_X, LBL_PATH_Y, LBL_PATH_WIDTH, LBL_PATH_HEIGHT);
-        lblPath.setFont(new Font("Serif", Font.TRUETYPE_FONT, 14));
-        frmMain.getContentPane().add(lblPath);
+
+        lblPath.setFont(
+                new Font("Serif", Font.TRUETYPE_FONT, 14));
+        frmMain.getContentPane()
+                .add(lblPath);
 
         lblResult = new JLabel("Result: ");
+
         lblResult.setBounds(LBL_RESULT_X, LBL_RESULT_Y, LBL_RESULT_WIDTH, LBL_RESULT_HEIGHT);
-        frmMain.getContentPane().add(lblResult);
+
+        frmMain.getContentPane()
+                .add(lblResult);
 
         txtResult = new JTextPane();
-        txtResult.setContentType("text/html");
-        txtResult.setEditable(false);
-        txtResult.addHyperlinkListener(new HyperlinkListener() {
+
+        txtResult.setContentType(
+                "text/html");
+        txtResult.setEditable(
+                false);
+        txtResult.addHyperlinkListener(
+                new HyperlinkListener() {
             @Override
-            public void hyperlinkUpdate(HyperlinkEvent e) {
+            public void hyperlinkUpdate(HyperlinkEvent e
+            ) {
                 if (e.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
                     try {
                         String lastNumber = e.getURL().toURI().toString().substring(e.getURL().toURI().toString().lastIndexOf("/") + 1);
@@ -229,20 +300,28 @@ public class MainFrame {
                     }
                 }
             }
-        });
+        }
+        );
         scrollPane = new JScrollPane(txtResult);
+
         scrollPane.setBounds(TXT_RESULT_X, TXT_RESULT_Y, TXT_RESULT_WIDTH, TXT_RESULT_HEIGHT);
-        frmMain.getContentPane().add(scrollPane);
+
+        frmMain.getContentPane()
+                .add(scrollPane);
     }
 
     private void performSearch(int pageNumber) {
+        if (!index.isIndexed("indexed/")) {
+            txtResult.setText("No file has been indexed!");
+            return;
+        }
         new Thread(new Runnable() {
             @Override
             public void run() {
                 String keyword = txtSearch.getText().toString();
                 String[] tokens = keyword.split("\\s+");
 
-                if (keyword.length() > 1) {
+                if (keyword.length() > 0) {
                     txtResult.setText(index.performSearch(keyword, pageNumber));
                 }
             }
