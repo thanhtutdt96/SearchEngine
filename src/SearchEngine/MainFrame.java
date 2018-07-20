@@ -188,7 +188,7 @@ public class MainFrame {
                 chooser.setFileFilter(new FileNameExtensionFilter("Text files", "doc", "docx", "txt", "xls", "xlsx"));
                 chooser.setMultiSelectionEnabled(true);
                 chooser.setCurrentDirectory(new java.io.File("./src/"));
-                chooser.setDialogTitle("Select your index folder...");
+                chooser.setDialogTitle("Select file(s)/folder");
                 chooser.setAcceptAllFileFilterUsed(false);
 
                 if (chooser.showOpenDialog(null) == JFileChooser.APPROVE_OPTION) {
@@ -250,6 +250,13 @@ public class MainFrame {
         frmMain.getContentPane()
                 .add(btnClear);
 
+        btnClear.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent ae) {
+                txtSearch.setText("");
+            }
+        });
+
 //        if (Preferences.userRoot().node(Constants.PREF_NAME).get(Constants.FOLDER_PATH, "").equals("")) {
         lblPath = new JLabel("Folder: " + index.getDefaultPath());
 //            index.saveFolderPath(index.getDefaultPath());
@@ -283,14 +290,19 @@ public class MainFrame {
                 if (e.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
                     try {
                         String lastNumber = e.getURL().toURI().toString().substring(e.getURL().toURI().toString().lastIndexOf("/") + 1);
+                        int filePos = -1;
                         if (Helper.isNumeric(lastNumber)) {
-                            String keyword = txtSearch.getText().toString();
                             int pageNumber = Integer.parseInt(lastNumber);
                             currentPage = pageNumber - 1;
                             performSearch(pageNumber);
                         } else {
-                            if (Desktop.isDesktopSupported()) {
-                                Desktop.getDesktop().browse(e.getURL().toURI());
+                            filePos = Helper.isExtending(lastNumber);
+                            if (filePos != -1) {
+                                txtResult.setText(index.performSearchInFilePos(filePos));
+                            } else {
+                                if (Desktop.isDesktopSupported()) {
+                                    Desktop.getDesktop().browse(e.getURL().toURI());
+                                }
                             }
                         }
                     } catch (URISyntaxException ex) {

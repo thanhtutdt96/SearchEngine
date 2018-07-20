@@ -97,6 +97,7 @@ public class Indexing {
     private HashMap<String, List<Postings>> tempMap;
     public List<File> fileList;
     private HashMap<Integer, List<Postings>> phraseMap;
+    private List<Posting> postingResults;
 
     private int[] posOfTerm = {0, 0, 0, 0, 0, 0, 0, 0};
 
@@ -310,7 +311,7 @@ public class Indexing {
                 postings.addAll(entry.getValue());
             }
             for (Map.Entry<String, List<Posting>> entry : tempHashMap.entrySet()) {
-                if (!hashMap.containsKey(entry.getKey())){
+                if (!hashMap.containsKey(entry.getKey())) {
                     hashMap.put(entry.getKey(), entry.getValue());
                 }
             }
@@ -403,13 +404,6 @@ public class Indexing {
                 readBinFile(file.getName());
             }).start();
         }
-
-//        try {
-//            Thread.sleep(3000);
-//        } catch (InterruptedException ex) {
-//            Logger.getLogger(Indexing.class.getName()).log(Level.SEVERE, null, ex);
-//        }
-//           printMap(hashMap_u_w);
     }
 
     public void readBinFile(String fileName) {
@@ -420,11 +414,11 @@ public class Indexing {
         try {
             fis = new FileInputStream("indexed/" + fileName);
             ois = new ObjectInputStream(fis);
-            System.out.println(fileName);
             hashMap = (HashMap<String, List<Posting>>) ois.readObject();
             setHashMapByFileName(fileName, hashMap);
             ois.close();
             fis.close();
+            System.out.println(fileName);
         } catch (IOException | ClassNotFoundException e) {
         }
     }
@@ -702,6 +696,7 @@ public class Indexing {
 
     public String searchOne(String keyword, int pageNumber) {
         String query = keyword.toLowerCase().split("(\\s|[.]|[,]|[:]|[?])+")[0];
+        int shown = 0;
         byte byteArray[] = query.getBytes();
         try {
             query = new String(byteArray, "UTF-8");
@@ -715,6 +710,7 @@ public class Indexing {
             result.append("No file was indexed!");
             return result.toString();
         }
+
         handler = ResultHandler.getInstance();
         if (pageNumber - 1 >= 0) {
             int firstRow = (pageNumber - 1) * 10;
@@ -725,21 +721,42 @@ public class Indexing {
             List<Integer> shownPos = new ArrayList<>();
 //            List<Posting> postingResult = pResult.subList(firstRow, lastRow);
 
+            int numberOfFile = 0;
+            for (Posting p : postingResult) {
+                if (!shownPos.contains(p.getFilePos())) {
+                    shownPos.add(p.getFilePos());
+                    numberOfFile++;
+                }
+            }
+            if (!shownPos.isEmpty()) {
+                shownPos.clear();
+            }
             if (postingResult != null) {
-                result.append("<div style='text-align: center;'><b style='font-size: 130%'>*** " + postingResult.size() + " results matched ***</b></div>");
+                this.postingResults = new ArrayList<>();
+                this.postingResults.addAll(postingResult);
+                if (phraseMap != null) {
+                    phraseMap.clear();
+                }
+                result.append("<div style='text-align: center;'><b style='font-size: 130%'>*** " + postingResult.size() + " results matched in " + numberOfFile + " files ***</b></div>");
                 result.append("<div><b style='font-size: 110%; color:red'><---- Page: " + pageNumber + " ----</b></div>");
                 boolean isShown = false;
                 shownPos.add(postingResult.get(0).getFilePos());
-                for (int i = firstRow; i < lastRow; i++) {
-//                for (int i = 0; i < postingResult.size(); i++) {
+//                for (int i = firstRow; i < lastRow; i++) {
+                for (int i = 0; i < postingResult.size(); i++) {
                     if (isShown == false) {
                         isShown = true;
-                        String innerDoc = retrieveIndex(fileList.get(postingResult.get(i).getFilePos()).getPath(), postingResult.get(i).getTermPos());
-                        String fileName = fileList.get(postingResult.get(i).getFilePos()).getName();
-                        result.append("<p style='color: blue; font-size= 130%'>\"<b>"
-                                + "<a href='file:///" + fileList.get(postingResult.get(i).getFilePos()).getAbsolutePath() + "'>" + fileName + "</a>"
-                                + "\"</b>, <em>Position:</em> " + postingResult.get(i).getTermPos());
-                        result.append("<div>" + innerDoc + "</div></p>");
+                        shown += 1;
+                        if (shown > firstRow) {
+                            if (shown > lastRow) {
+                                break;
+                            }
+                            String innerDoc = retrieveIndex(fileList.get(postingResult.get(i).getFilePos()).getPath(), postingResult.get(i).getTermPos());
+                            String fileName = fileList.get(postingResult.get(i).getFilePos()).getName();
+                            result.append("<p style='color: blue; font-size= 130%'><b>\""
+                                    + "<a href='file:///" + fileList.get(postingResult.get(i).getFilePos()).getAbsolutePath() + "'>" + fileName + "</a>"
+                                    + "\"</b>, <em>Position:</em> " + postingResult.get(i).getTermPos() + "&nbsp&nbsp&nbsp&nbsp<a href='file:///m" + postingResult.get(i).getFilePos() + "'>" + "More from this file" + "</a>");
+                            result.append("<div>" + innerDoc + "</div></p>");
+                        }
                     }
                     if (shownPos.contains(postingResult.get(postingResult.size() - 1).getFilePos())) {
                         break;
@@ -754,7 +771,7 @@ public class Indexing {
             } else {
                 result.append("No matches found");
             }
-            result.append(handler.appendSearchPages(shownPos.size()));//postingResult.size()));
+            result.append(handler.appendSearchPages(numberOfFile));//postingResult.size()));
         }
 
         return result.toString();
@@ -841,13 +858,29 @@ public class Indexing {
             boolean isFound = false;
             handler = ResultHandler.getInstance();
             int noOfResults = 0;
+            int numberOfFile = 0;
+            int shown = 0;
+            List<Integer> shownPos = new ArrayList<>();
             if (hasResult == true) {
+                if (this.postingResults != null) {
+                    this.postingResults.clear();
+                }
                 for (int i = 0; i < valueList.size(); i++) {
                     noOfResults += phraseMap.get(valueList.get(i)).size();
+                    for (Postings p : phraseMap.get(valueList.get(i))) {
+                        if (!shownPos.contains(p.getFilePos())) {
+                            numberOfFile++;
+                            shownPos.add(p.getFilePos());
+                        }
+                    }
                 }
-                result.append("<div><b style='font-size: 130%'>*** " + noOfResults + " results matched ***</b></div>");
-                result.append("<b style='font-size: 110%, color:'red'>---- Page: " + pageNumber + " ----</b>");
+                if (!shownPos.isEmpty()) {
+                    shownPos.clear();
+                }
+                result.append("<div><b style='font-size: 130%'>*** " + noOfResults + " results matched in " + numberOfFile + " files ***</b></div>");
+                result.append("<b style='font-size: 110%, color:red'>---- Page: " + pageNumber + " ----</b>");
 
+                shownPos.add(phraseMap.get(valueList.get(0)).get(0).getFilePos());
                 for (int i = 0; i < valueList.size(); i++) {
                     String innerDoc;
                     List<Postings> termsPos = phraseMap.get(valueList.get(i));
@@ -857,37 +890,47 @@ public class Indexing {
                         if (lastRow > termsPos.size() - 1) {
                             lastRow = termsPos.size();
                         }
-                        for (int j = firstRow; j < lastRow; j++) {
-                            String fileName = fileList.get(termsPos.get(j).getFilePos()).getName();
-                            String filePath = fileList.get(termsPos.get(j).getFilePos()).getPath();
-                            innerDoc = retrieveIndex(filePath, termsPos.get(j).getTermPos());
-                            result.append("<p style='color: blue; font-size= 130%'>\"<b>"
-                                    + "<a href='file:///" + fileList.get(termsPos.get(j).getFilePos()).getAbsolutePath() + "'>" + fileName + "</a>"
-                                    + "\"</b>, <em>Position:</em> ");
-                            Collections.sort(termsPos.get(j).getTermPos(), new Comparator<Integer>() {
-                                @Override
-                                public int compare(Integer o1, Integer o2) {
-                                    return o1 < o2 ? -1 : o1 == o2 ? 0 : 1;
+                        for (int j = 0; j < termsPos.size(); j++) {
+                            if (!shownPos.contains(termsPos.get(j).getFilePos())) {
+                                shownPos.add(termsPos.get(j).getFilePos());
+                                shown++;
+                                if (shown > firstRow) {
+                                    if (shown > lastRow) {
+                                        isFound = true;
+                                        break;
+                                    }
+                                    String fileName = fileList.get(termsPos.get(j).getFilePos()).getName();
+                                    String filePath = fileList.get(termsPos.get(j).getFilePos()).getPath();
+                                    innerDoc = retrieveIndex(filePath, termsPos.get(j).getTermPos());
+                                    result.append("<p style='color: blue; font-size= 130%'>\"<b>"
+                                            + "<a href='file:///" + fileList.get(termsPos.get(j).getFilePos()).getAbsolutePath() + "'>" + fileName + "</a>"
+                                            + "\"</b>, <em>Position:</em> ");
+                                    Collections.sort(termsPos.get(j).getTermPos(), new Comparator<Integer>() {
+                                        @Override
+                                        public int compare(Integer o1, Integer o2) {
+                                            return o1 < o2 ? -1 : o1 == o2 ? 0 : 1;
+                                        }
+                                    });
+                                    for (int k = 0; k < termsPos.get(j).getTermPos().size() - 1; k++) {
+                                        result.append(termsPos.get(j).getTermPos().get(k) + " & ");
+                                    }
+                                    result.append(termsPos.get(j).getTermPos().get(termsPos.get(j).getTermPos().size() - 1));
+                                    result.append("&nbsp&nbsp&nbsp&nbsp<a href='file:///m" + termsPos.get(j).getFilePos() + "'>" + "More from this file" + "</a>" + "<div>" + innerDoc + "</div></p>");
+                                    if (count == pageNumber * 10 + 10) {
+                                        isFound = true;
+                                    }
                                 }
-                            });
-                            for (int k = 0; k < termsPos.get(j).getTermPos().size() - 1; k++) {
-                                result.append(termsPos.get(j).getTermPos().get(k) + " & ");
                             }
-                            result.append(termsPos.get(j).getTermPos().get(termsPos.get(j).getTermPos().size() - 1));
-                            result.append("<div>" + innerDoc + "</div></p>");
-                            if (count == pageNumber * 10 + 10) {
-                                isFound = true;
+                            if (isFound) {
+                                break;
                             }
-                        }
-                        if (isFound) {
-                            break;
                         }
                     } else {
                         result.append("The chosen page is invalid");
                     }
                 }
                 result.append("<br/>");
-                result.append(handler.appendSearchPages(noOfResults));
+                result.append(handler.appendSearchPages(numberOfFile));
             } else {
                 result.append("No matches found");
             }
@@ -959,6 +1002,72 @@ public class Indexing {
         } else {
             return searchPhrase(word, pageNumber);
         }
+    }
+
+    public String performSearchInFilePos(int filePos) {
+        StringBuilder result = new StringBuilder();
+        if (this.postingResults != null) {
+            if (this.postingResults.size() > 0) {
+                int noAppear = 0;
+                for (Posting p : this.postingResults) {
+                    if (p.getFilePos() == filePos) {
+                        noAppear++;
+                    }
+                }
+                result.append("<div><b style='font-size: 130%'>*** " + noAppear + " results in this file ***</b></div>");
+                for (int i = 0; i < this.postingResults.size(); i++) {
+                    if (postingResults.get(i).getFilePos() == filePos) {
+                        String innerDoc = retrieveIndex(fileList.get(postingResults.get(i).getFilePos()).getPath(), postingResults.get(i).getTermPos());
+                        String fileName = fileList.get(postingResults.get(i).getFilePos()).getName();
+                        result.append("<p style='color: blue; font-size= 130%'><b>"
+                                + "<a href='file:///" + fileList.get(postingResults.get(i).getFilePos()).getAbsolutePath() + "'>" + fileName + "</a>"
+                                + "\"</b>, <em>Position:</em> " + postingResults.get(i).getTermPos());
+                        result.append("<div>" + innerDoc + "</div></p>");
+                    }
+                }
+            }
+        } else if (phraseMap != null) {
+            int noAppear = 0;
+            for (Map.Entry<Integer, List<Postings>> entry : phraseMap.entrySet()) {
+                List<Postings> termsPos = entry.getValue();
+                for (int i = 0; i < termsPos.size(); i++) {
+                    for (int j = 0; j < entry.getValue().get(i).getSize(); j++) {
+                        if (entry.getValue().get(i).getFilePos() == filePos) {
+                            noAppear++;
+                        }
+                    }
+                }
+            }
+            result.append("<div><b style='font-size: 130%'>*** " + noAppear + " results in this file ***</b></div>");
+            for (Map.Entry<Integer, List<Postings>> entry : phraseMap.entrySet()) {
+                List<Postings> termsPos = entry.getValue();
+                for (int i = 0; i < termsPos.size(); i++) {
+                    if (entry.getValue().get(i).getFilePos() == filePos) {
+                        String innerDoc;
+                        for (int j = 0; j < entry.getValue().get(i).getSize(); j++) {
+                            String fileName = fileList.get(termsPos.get(j).getFilePos()).getName();
+                            String filePath = fileList.get(termsPos.get(j).getFilePos()).getPath();
+                            innerDoc = retrieveIndex(filePath, termsPos.get(j).getTermPos());
+                            result.append("<p style='color: blue; font-size= 130%'>\"<b>"
+                                    + "<a href='file:///" + fileList.get(termsPos.get(j).getFilePos()).getAbsolutePath() + "'>" + fileName + "</a>"
+                                    + "\"</b>, <em>Position:</em> ");
+                            Collections.sort(termsPos.get(j).getTermPos(), new Comparator<Integer>() {
+                                @Override
+                                public int compare(Integer o1, Integer o2) {
+                                    return o1 < o2 ? -1 : o1 == o2 ? 0 : 1;
+                                }
+                            });
+                            for (int k = 0; k < termsPos.get(j).getTermPos().size() - 1; k++) {
+                                result.append(termsPos.get(j).getTermPos().get(k) + " & ");
+                            }
+                            result.append(termsPos.get(j).getTermPos().get(termsPos.get(j).getTermPos().size() - 1));
+                            result.append("<div>" + innerDoc + "</div></p>");
+                        }
+                    }
+                }
+            }
+        }
+        return result.toString();
     }
 
     public void readIndex() {

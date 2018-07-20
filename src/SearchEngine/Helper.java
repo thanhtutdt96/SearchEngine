@@ -33,7 +33,7 @@ import org.apache.poi.xwpf.usermodel.XWPFParagraph;
  * @author Tu
  */
 public class Helper {
-    
+
     Pattern pattern1 = Pattern.compile("^[aáàảãạăắặằẳẵâấầẩẫậbcdđAÁÀẢÃẠĂẶẰẲẴÂẤẦẨẪBCD]");
     Pattern pattern2 = Pattern.compile("^[eéèẻẽẹêếềểễệfghEÉÈẺẼẸÊẾỀỂỄỆFGH]");
     Pattern pattern3 = Pattern.compile("^[iíìỉĩịjklIÍÌỈĨỊJKL]");
@@ -353,6 +353,19 @@ public class Helper {
             }
         }
         return true;
+    }
+
+    public static int isExtending(String str) {
+        char[] number = new char[str.length() - 1];
+        if (str.charAt(0) == 'm') {
+            for (int i = 1; i < str.length(); i++) {
+                if (Character.isDigit(str.charAt(i))) {
+                    number[i-1] = str.charAt(i);
+                }
+            }
+            return Integer.parseInt(new String(number));
+        }
+        return -1;
     }
 
 }
