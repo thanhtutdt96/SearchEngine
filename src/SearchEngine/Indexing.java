@@ -1042,27 +1042,25 @@ public class Indexing {
             for (Map.Entry<Integer, List<Postings>> entry : phraseMap.entrySet()) {
                 List<Postings> termsPos = entry.getValue();
                 for (int i = 0; i < termsPos.size(); i++) {
-                    if (entry.getValue().get(i).getFilePos() == filePos) {
+                    if (termsPos.get(i).getFilePos() == filePos) {
                         String innerDoc;
-                        for (int j = 0; j < entry.getValue().get(i).getSize(); j++) {
-                            String fileName = fileList.get(termsPos.get(j).getFilePos()).getName();
-                            String filePath = fileList.get(termsPos.get(j).getFilePos()).getPath();
-                            innerDoc = retrieveIndex(filePath, termsPos.get(j).getTermPos());
-                            result.append("<p style='color: blue; font-size= 130%'>\"<b>"
-                                    + "<a href='file:///" + fileList.get(termsPos.get(j).getFilePos()).getAbsolutePath() + "'>" + fileName + "</a>"
-                                    + "\"</b>, <em>Position:</em> ");
-                            Collections.sort(termsPos.get(j).getTermPos(), new Comparator<Integer>() {
-                                @Override
-                                public int compare(Integer o1, Integer o2) {
-                                    return o1 < o2 ? -1 : o1 == o2 ? 0 : 1;
-                                }
-                            });
-                            for (int k = 0; k < termsPos.get(j).getTermPos().size() - 1; k++) {
-                                result.append(termsPos.get(j).getTermPos().get(k) + " & ");
+                        String fileName = fileList.get(termsPos.get(i).getFilePos()).getName();
+                        String filePath = fileList.get(termsPos.get(i).getFilePos()).getPath();
+                        innerDoc = retrieveIndex(filePath, termsPos.get(i).getTermPos());
+                        result.append("<p style='color: blue; font-size= 130%'>\"<b>"
+                                + "<a href='file:///" + fileList.get(termsPos.get(i).getFilePos()).getAbsolutePath() + "'>" + fileName + "</a>"
+                                + "\"</b>, <em>Position:</em> ");
+                        Collections.sort(termsPos.get(i).getTermPos(), new Comparator<Integer>() {
+                            @Override
+                            public int compare(Integer o1, Integer o2) {
+                                return o1 < o2 ? -1 : o1 == o2 ? 0 : 1;
                             }
-                            result.append(termsPos.get(j).getTermPos().get(termsPos.get(j).getTermPos().size() - 1));
-                            result.append("<div>" + innerDoc + "</div></p>");
+                        });
+                        for (int k = 0; k < termsPos.get(i).getTermPos().size() - 1; k++) {
+                            result.append(termsPos.get(i).getTermPos().get(k) + " & ");
                         }
+                        result.append(termsPos.get(i).getTermPos().get(termsPos.get(i).getTermPos().size() - 1));
+                        result.append("<div>" + innerDoc + "</div></p>");
                     }
                 }
             }
