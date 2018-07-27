@@ -750,7 +750,7 @@ public class Indexing {
                     phraseMap.clear();
                 }
                 result.append("<div style='text-align: center;'><b style='font-size: 130%'>*** " + postingResult.size() + " results matched in " + numberOfFile + " files ***</b></div>");
-                result.append("<div><b style='font-size: 110%; color:red'><---- Page: " + pageNumber + " ----</b></div>");
+                result.append("<div style='text-align: center;'><b style='font-size: 110%; color:red'><---- Page: " + pageNumber + " ----</b></div>");
                 boolean isShown = false;
                 shownPos.add(postingResult.get(0).getFilePos());
 //                for (int i = firstRow; i < lastRow; i++) {
@@ -824,7 +824,7 @@ public class Indexing {
             return searchOne(meaningfulWords.get(0), pageNumber);
         } else if (lengthOfPhrase < query.length) {
             StringBuilder sb = new StringBuilder();
-            for (int i = 0; i< meaningfulWords.size(); i++){
+            for (int i = 0; i < meaningfulWords.size(); i++) {
                 sb.append(meaningfulWords.get(i)).append(" ");
             }
             return searchPhrase(sb.toString(), pageNumber);
@@ -898,8 +898,8 @@ public class Indexing {
                 if (!shownPos.isEmpty()) {
                     shownPos.clear();
                 }
-                result.append("<div><b style='font-size: 130%'>*** " + noOfResults + " results matched in " + numberOfFile + " files ***</b></div>");
-                result.append("<b style='font-size: 110%, color:red'>---- Page: " + pageNumber + " ----</b>");
+                result.append("<div style='text-align: center;'><b style='font-size: 130%'>*** " + noOfResults + " results matched in " + numberOfFile + " files ***</b></div>");
+                result.append("<div style='text-align: center;'><b style='font-size: 110%; color:red'>---- Page: " + pageNumber + " ----</b></div>");
 
                 for (int i = 0; i < valueList.size(); i++) {
                     String innerDoc;
@@ -1031,62 +1031,67 @@ public class Indexing {
     public String performSearchInFilePos(int filePos) {
         StringBuilder result = new StringBuilder();
         if (this.postingResults != null) {
-            if (this.postingResults.size() > 0) {
-                int noAppear = 0;
-                for (Posting p : this.postingResults) {
-                    if (p.getFilePos() == filePos) {
-                        noAppear++;
-                    }
-                }
-                result.append("<div><b style='font-size: 130%'>*** " + noAppear + " results in this file ***</b></div>");
-                for (int i = 0; i < this.postingResults.size(); i++) {
-                    if (postingResults.get(i).getFilePos() == filePos) {
-                        String innerDoc = retrieveIndex(fileList.get(postingResults.get(i).getFilePos()), postingResults.get(i).getTermPos());
-                        String fileName = getName(fileList.get(postingResults.get(i).getFilePos()));
-                        result.append("<p style='color: blue; font-size= 130%'><b>"
-                                + "<a href='file:///" + fileList.get(postingResults.get(i).getFilePos()) + "'>" + fileName + "</a>"
-                                + "\"</b>, <em>Position:</em> " + postingResults.get(i).getTermPos());
-                        result.append("<div>" + innerDoc + "</div></p>");
-                    }
-                }
-            }
-        } else if (phraseMap != null) {
-            int noAppear = 0;
-            int querySize = 0;
-            for (Map.Entry<Integer, List<Postings>> entry : phraseMap.entrySet()) {
-                List<Postings> termsPos = entry.getValue();
-                for (int i = 0; i < termsPos.size(); i++) {
-                    for (int j = 0; j < entry.getValue().get(i).getSize(); j++) {
-                        if (entry.getValue().get(i).getFilePos() == filePos) {
+            if (!this.postingResults.isEmpty()) {
+                if (this.postingResults.size() > 0) {
+                    int noAppear = 0;
+                    for (Posting p : this.postingResults) {
+                        if (p.getFilePos() == filePos) {
                             noAppear++;
                         }
-                        querySize = entry.getValue().get(i).getSize();
+                    }
+                    result.append("<div style='text-align: center;'><b style='font-size: 130%'>*** " + noAppear + " results in this file ***</b></div>");
+                    for (int i = 0; i < this.postingResults.size(); i++) {
+                        if (postingResults.get(i).getFilePos() == filePos) {
+                            String innerDoc = retrieveIndex(fileList.get(postingResults.get(i).getFilePos()), postingResults.get(i).getTermPos());
+                            String fileName = getName(fileList.get(postingResults.get(i).getFilePos()));
+                            result.append("<p style='color: blue; font-size= 130%'><b>"
+                                    + "<a href='file:///" + fileList.get(postingResults.get(i).getFilePos()) + "'>" + fileName + "</a>"
+                                    + "\"</b>, <em>Position:</em> " + postingResults.get(i).getTermPos());
+                            result.append("<div>" + innerDoc + "</div></p>");
+                        }
                     }
                 }
             }
-            result.append("<div><b style='font-size: 130%'>*** " + (noAppear/querySize) + " results in this file ***</b></div>");
-            for (Map.Entry<Integer, List<Postings>> entry : phraseMap.entrySet()) {
-                List<Postings> termsPos = entry.getValue();
-                for (int i = 0; i < termsPos.size(); i++) {
-                    if (termsPos.get(i).getFilePos() == filePos) {
-                        String innerDoc;
-                        String fileName = getName(fileList.get(termsPos.get(i).getFilePos()));
-                        String filePath = fileList.get(termsPos.get(i).getFilePos());
-                        innerDoc = retrieveIndex(filePath, termsPos.get(i).getTermPos());
-                        result.append("<p style='color: blue; font-size= 130%'>\"<b>"
-                                + "<a href='file:///" + fileList.get(termsPos.get(i).getFilePos()) + "'>" + fileName + "</a>"
-                                + "\"</b>, <em>Position:</em> ");
-                        Collections.sort(termsPos.get(i).getTermPos(), new Comparator<Integer>() {
-                            @Override
-                            public int compare(Integer o1, Integer o2) {
-                                return o1 < o2 ? -1 : o1 == o2 ? 0 : 1;
+        }
+        if (phraseMap != null) {
+            if (!phraseMap.isEmpty()) {
+                int noAppear = 0;
+                int querySize = 0;
+                for (Map.Entry<Integer, List<Postings>> entry : phraseMap.entrySet()) {
+                    List<Postings> termsPos = entry.getValue();
+                    for (int i = 0; i < termsPos.size(); i++) {
+                        for (int j = 0; j < entry.getValue().get(i).getSize(); j++) {
+                            if (entry.getValue().get(i).getFilePos() == filePos) {
+                                noAppear++;
                             }
-                        });
-                        for (int k = 0; k < termsPos.get(i).getTermPos().size() - 1; k++) {
-                            result.append(termsPos.get(i).getTermPos().get(k) + " & ");
+                            querySize = entry.getValue().get(i).getSize();
                         }
-                        result.append(termsPos.get(i).getTermPos().get(termsPos.get(i).getTermPos().size() - 1));
-                        result.append("<div>" + innerDoc + "</div></p>");
+                    }
+                }
+                result.append("<div style='text-align: center;'><b style='font-size: 130%'>*** " + (noAppear / querySize) + " results in this file ***</b></div>");
+                for (Map.Entry<Integer, List<Postings>> entry : phraseMap.entrySet()) {
+                    List<Postings> termsPos = entry.getValue();
+                    for (int i = 0; i < termsPos.size(); i++) {
+                        if (termsPos.get(i).getFilePos() == filePos) {
+                            String innerDoc;
+                            String fileName = getName(fileList.get(termsPos.get(i).getFilePos()));
+                            String filePath = fileList.get(termsPos.get(i).getFilePos());
+                            innerDoc = retrieveIndex(filePath, termsPos.get(i).getTermPos());
+                            result.append("<p style='color: blue; font-size= 130%'>\"<b>"
+                                    + "<a href='file:///" + fileList.get(termsPos.get(i).getFilePos()) + "'>" + fileName + "</a>"
+                                    + "\"</b>, <em>Position:</em> ");
+                            Collections.sort(termsPos.get(i).getTermPos(), new Comparator<Integer>() {
+                                @Override
+                                public int compare(Integer o1, Integer o2) {
+                                    return o1 < o2 ? -1 : o1 == o2 ? 0 : 1;
+                                }
+                            });
+                            for (int k = 0; k < termsPos.get(i).getTermPos().size() - 1; k++) {
+                                result.append(termsPos.get(i).getTermPos().get(k) + " & ");
+                            }
+                            result.append(termsPos.get(i).getTermPos().get(termsPos.get(i).getTermPos().size() - 1));
+                            result.append("<div>" + innerDoc + "</div></p>");
+                        }
                     }
                 }
             }
