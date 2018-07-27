@@ -28,6 +28,8 @@ import java.util.logging.Logger;
 import java.util.prefs.Preferences;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.zip.GZIPInputStream;
+import java.util.zip.GZIPOutputStream;
 
 public class Indexing {
 
@@ -39,6 +41,7 @@ public class Indexing {
     public HashMap<String, List<Posting>> hashMap_u_w;
     public HashMap<String, List<Posting>> hashMap_x_z;
     public HashMap<String, List<Posting>> hashMap_other;
+    public HashMap<String, List<Posting>> tempHashMap;
 
     Pattern pattern1 = Pattern.compile("^[aáàảãạăắặằẳẵâấầẩẫậbcdđAÁÀẢÃẠĂẶẰẲẴÂẤẦẨẪBCD]");
     Pattern pattern2 = Pattern.compile("^[eéèẻẽẹêếềểễệfghEÉÈẺẼẸÊẾỀỂỄỆFGH]");
@@ -84,6 +87,15 @@ public class Indexing {
         this.hashMap_other = hashMap_other;
     }
 
+    public static HashMap<String, List<Posting>> copy(
+            HashMap<String, List<Posting>> original) {
+        HashMap<String, List<Posting>> copy = new HashMap<String, List<Posting>>();
+        for (Map.Entry<String, List<Posting>> entry : original.entrySet()) {
+            copy.put(entry.getKey(), new ArrayList<Posting>(entry.getValue()));
+        }
+        return copy;
+    }
+
     private static Indexing instance = null;
     public Helper helper;
     private Parser parser = null;
@@ -95,7 +107,7 @@ public class Indexing {
 //    private HashMap<String, List<Posting>> indexMap;
     private HashMap<String, List<Integer>> termMap;
     private HashMap<String, List<Postings>> tempMap;
-    public List<File> fileList;
+    public List<String> fileList;
     private HashMap<Integer, List<Postings>> phraseMap;
     private List<Posting> postingResults;
 
@@ -206,26 +218,28 @@ public class Indexing {
         }
     }
 
-    public void addFileList(List<File> files) {
+    public void addFileList(List<String> files) {
         readFileList();
         fileList.addAll(files);
     }
 
-    public void buildIndex(List<File> files) {
+    public void buildIndex(List<String> files) {
         mainFrame = MainFrame.getInstance();
-        mainFrame.txtResult.setText("Building index ...");
+//        mainFrame.txtResult.setText("Building index ...");
         parser = Parser.getInstance();
         String filePath;
         String[] line;
         HashMap<String, Boolean> stopWordsMap = new HashMap<>();
+        int termPos;
+        int filePos;
 
         for (int i = 0; i < files.size(); i++) {
             for (int k = 0; k < Constants.STOP_WORDS.size(); k++) {
                 stopWordsMap.put(Constants.STOP_WORDS.get(k), Boolean.FALSE);
             }
-            filePath = files.get(i).getAbsolutePath();
-            int termPos = 0;
-            int filePos = fileList.indexOf(files.get(i));
+            filePath = files.get(i);
+            termPos = 0;
+            filePos = fileList.indexOf(files.get(i));
             if (filePos == -1) {
                 fileList.add(files.get(i));
                 filePos = fileList.size() - 1;
@@ -277,12 +291,12 @@ public class Indexing {
                 }
             }
         }
-        mainFrame.txtResult.setText("Saving ...");
+//        mainFrame.txtResult.setText("Saving ...");
     }
 
     public void mergeIndex() {
-        mainFrame = MainFrame.getInstance();
-        mainFrame.txtResult.setText("Merging index ...");
+//        mainFrame = MainFrame.getInstance();
+//        mainFrame.txtResult.setText("Merging index ...");
         mergeMap(hashMap_a_d);
         mergeMap(hashMap_e_h);
         mergeMap(hashMap_i_l);
@@ -291,7 +305,7 @@ public class Indexing {
         mergeMap(hashMap_u_w);
         mergeMap(hashMap_x_z);
         mergeMap(hashMap_other);
-        mainFrame.txtResult.setText("Saving index ...");
+//        mainFrame.txtResult.setText("Saving index ...");
     }
 
     public void mergeMap(HashMap<String, List<Posting>> hashMap) {
@@ -299,8 +313,9 @@ public class Indexing {
             FileInputStream fis;
             ObjectInputStream ois;
             fis = new FileInputStream("indexed/" + getIndexFileNameByHashMap(hashMap) + ".bin");
-            ois = new ObjectInputStream(fis);
-            HashMap<String, List<Posting>> tempHashMap = (HashMap<String, List<Posting>>) ois.readObject();
+            GZIPInputStream gzipIn = new GZIPInputStream(fis);
+            ois = new ObjectInputStream(gzipIn);
+            tempHashMap = (HashMap<String, List<Posting>>) ois.readObject();
             ois.close();
             fis.close();
             for (Map.Entry<String, List<Posting>> entry : hashMap.entrySet()) {
@@ -316,11 +331,11 @@ public class Indexing {
                 }
             }
             saveIndexBinary(hashMap);
+            tempHashMap = new HashMap<>();
+            System.gc();
         } catch (FileNotFoundException ex) {
             Logger.getLogger(Indexing.class.getName()).log(Level.SEVERE, null, ex);
-        } catch (IOException ex) {
-            Logger.getLogger(Indexing.class.getName()).log(Level.SEVERE, null, ex);
-        } catch (ClassNotFoundException ex) {
+        } catch (IOException | ClassNotFoundException ex) {
             Logger.getLogger(Indexing.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
@@ -382,7 +397,8 @@ public class Indexing {
                 file.delete();
             }
             fos = new FileOutputStream(file);
-            oos = new ObjectOutputStream(fos);
+            GZIPOutputStream gz = new GZIPOutputStream(fos);
+            oos = new ObjectOutputStream(gz);
             oos.writeObject(hashMap);
             oos.close();
         } catch (IOException e) {
@@ -407,13 +423,14 @@ public class Indexing {
     }
 
     public void readBinFile(String fileName) {
-        HashMap<String, List<Posting>> hashMap;
+        HashMap<String, List<Posting>> hashMap = new HashMap<>();
         FileInputStream fis;
         ObjectInputStream ois;
         // Read serializable file
         try {
             fis = new FileInputStream("indexed/" + fileName);
-            ois = new ObjectInputStream(fis);
+            GZIPInputStream gzipIn = new GZIPInputStream(fis);
+            ois = new ObjectInputStream(gzipIn);
             hashMap = (HashMap<String, List<Posting>>) ois.readObject();
             setHashMapByFileName(fileName, hashMap);
             ois.close();
@@ -428,14 +445,11 @@ public class Indexing {
         FileWriter fileWriter;
         BufferedWriter bufferedWriter;
         StringBuilder builder = new StringBuilder();
-        String line;
         try {
             fileWriter = new FileWriter("indexed/list.txt");
             bufferedWriter = new BufferedWriter(fileWriter);
-            for (File file : fileList) {
-                String path = file.getPath();
-
-                builder.append(path);
+            for (String file : fileList) {
+                builder.append(file);
                 builder.append(System.lineSeparator());
 
             }
@@ -485,18 +499,17 @@ public class Indexing {
         return "other";
     }
 
-    public String getFilePath(String path, String prefix) {
-        File folder = new File(path);
-        File[] listOfFiles = folder.listFiles();
-
-        for (File file : listOfFiles) {
-            if (file.getName().startsWith(prefix)) {
-                return file.getPath();
-            }
-        }
-        return "";
-    }
-
+//    public String getFilePath(String path, String prefix) {
+//        File folder = new File(path);
+//        File[] listOfFiles = folder.listFiles();
+//
+//        for (File file : listOfFiles) {
+//            if (file.getName().startsWith(prefix)) {
+//                return file.getPath();
+//            }
+//        }
+//        return "";
+//    }
     public void readFileList() {
         try {
             fileList = new ArrayList<>();
@@ -504,8 +517,7 @@ public class Indexing {
             BufferedReader bufferedReader = new BufferedReader(fileReader);
             String line;
             while ((line = bufferedReader.readLine()) != null) {
-                File file = new File(line);
-                fileList.add(file);
+                fileList.add(line);
             }
             bufferedReader.close();
             fileReader.close();
@@ -707,7 +719,7 @@ public class Indexing {
         List<Posting> postingResult = getHashMapByTerm(query).get(query);
         StringBuilder result = new StringBuilder();
         if (postingResult == null) {
-            result.append("No file was indexed!");
+            result.append("No results were found");
             return result.toString();
         }
 
@@ -750,10 +762,10 @@ public class Indexing {
                             if (shown > lastRow) {
                                 break;
                             }
-                            String innerDoc = retrieveIndex(fileList.get(postingResult.get(i).getFilePos()).getPath(), postingResult.get(i).getTermPos());
-                            String fileName = fileList.get(postingResult.get(i).getFilePos()).getName();
+                            String innerDoc = retrieveIndex(fileList.get(postingResult.get(i).getFilePos()), postingResult.get(i).getTermPos());
+                            String fileName = getName(fileList.get(postingResult.get(i).getFilePos()));
                             result.append("<p style='color: blue; font-size= 130%'><b>\""
-                                    + "<a href='file:///" + fileList.get(postingResult.get(i).getFilePos()).getAbsolutePath() + "'>" + fileName + "</a>"
+                                    + "<a href='file:///" + fileList.get(postingResult.get(i).getFilePos()) + "'>" + fileName + "</a>"
                                     + "\"</b>, <em>Position:</em> " + postingResult.get(i).getTermPos() + "&nbsp&nbsp&nbsp&nbsp<a href='file:///m" + postingResult.get(i).getFilePos() + "'>" + "More from this file" + "</a>");
                             result.append("<div>" + innerDoc + "</div></p>");
                         }
@@ -777,9 +789,13 @@ public class Indexing {
         return result.toString();
     }
 
+    public String getName(String path) {
+        String name = path.split("\\\\")[path.split("\\\\").length - 1];
+        return name;
+    }
+
     public String searchPhrase(String keyword, int pageNumber) {
         handler = ResultHandler.getInstance();
-
         phraseMap = new HashMap<>();
         String[] query = keyword.toLowerCase().split("\\s+");
         StringBuilder result = new StringBuilder();
@@ -805,7 +821,13 @@ public class Indexing {
             }
         }
         if (lengthOfPhrase == 1) {
-            return searchOne(meaningfulWords.get(0), 1);
+            return searchOne(meaningfulWords.get(0), pageNumber);
+        } else if (lengthOfPhrase < query.length) {
+            StringBuilder sb = new StringBuilder();
+            for (int i = 0; i< meaningfulWords.size(); i++){
+                sb.append(meaningfulWords.get(i)).append(" ");
+            }
+            return searchPhrase(sb.toString(), pageNumber);
         } else {
             List<Posting> initialList = postingResult.get(0);
             for (int i = 0; i < initialList.size(); i++) {
@@ -856,7 +878,6 @@ public class Indexing {
             });
             int count = 0;
             boolean isFound = false;
-            handler = ResultHandler.getInstance();
             int noOfResults = 0;
             int numberOfFile = 0;
             int shown = 0;
@@ -880,7 +901,6 @@ public class Indexing {
                 result.append("<div><b style='font-size: 130%'>*** " + noOfResults + " results matched in " + numberOfFile + " files ***</b></div>");
                 result.append("<b style='font-size: 110%, color:red'>---- Page: " + pageNumber + " ----</b>");
 
-                shownPos.add(phraseMap.get(valueList.get(0)).get(0).getFilePos());
                 for (int i = 0; i < valueList.size(); i++) {
                     String innerDoc;
                     List<Postings> termsPos = phraseMap.get(valueList.get(i));
@@ -899,11 +919,11 @@ public class Indexing {
                                         isFound = true;
                                         break;
                                     }
-                                    String fileName = fileList.get(termsPos.get(j).getFilePos()).getName();
-                                    String filePath = fileList.get(termsPos.get(j).getFilePos()).getPath();
+                                    String fileName = getName(fileList.get(termsPos.get(j).getFilePos()));
+                                    String filePath = fileList.get(termsPos.get(j).getFilePos());
                                     innerDoc = retrieveIndex(filePath, termsPos.get(j).getTermPos());
                                     result.append("<p style='color: blue; font-size= 130%'>\"<b>"
-                                            + "<a href='file:///" + fileList.get(termsPos.get(j).getFilePos()).getAbsolutePath() + "'>" + fileName + "</a>"
+                                            + "<a href='file:///" + fileList.get(termsPos.get(j).getFilePos()) + "'>" + fileName + "</a>"
                                             + "\"</b>, <em>Position:</em> ");
                                     Collections.sort(termsPos.get(j).getTermPos(), new Comparator<Integer>() {
                                         @Override
@@ -940,6 +960,7 @@ public class Indexing {
 
     public int calculateValue(List<Integer> posting) {
         int value = 0;
+        Collections.sort(posting);
         for (int i = 1; i < posting.size() - 1; i++) {
             if (posting.get(i) + 1 == posting.get(i + 1)) {
                 continue;
@@ -950,13 +971,12 @@ public class Indexing {
         return value;
     }
 
-    public void printMap(HashMap<String, List<Posting>> map) {
-        for (Map.Entry<String, List<Posting>> entry : map.entrySet()) {
-            System.out.println(entry.getKey() + "=>" + entry.getValue());
-        }
-    }
-
-    public List<File> indexFileList(String[] paths, boolean isFile) {
+//    public void printMap(HashMap<String, List<Posting>> map) {
+//        for (Map.Entry<String, List<Posting>> entry : map.entrySet()) {
+//            System.out.println(entry.getKey() + "=>" + entry.getValue());
+//        }
+//    }
+    public List<String> indexFileList(String[] paths, boolean isFile) {
         fileList = new ArrayList<>();
         if (isFile) {
             File[] listOfFiles = new File[paths.length];
@@ -965,7 +985,9 @@ public class Indexing {
             }
             for (File file : listOfFiles) {
                 if (file.isFile()) {
-                    fileList.add(file);
+                    if (!fileList.contains(file.getAbsolutePath())) {
+                        fileList.add(file.getAbsolutePath());
+                    }
                 }
             }
         } else {
@@ -974,7 +996,9 @@ public class Indexing {
 
             for (File file : listOfFiles) {
                 if (file.isFile()) {
-                    fileList.add(file);
+                    if (!fileList.contains(file.getAbsolutePath())) {
+                        fileList.add(file.getAbsolutePath());
+                    }
                 }
             }
         }
@@ -1017,10 +1041,10 @@ public class Indexing {
                 result.append("<div><b style='font-size: 130%'>*** " + noAppear + " results in this file ***</b></div>");
                 for (int i = 0; i < this.postingResults.size(); i++) {
                     if (postingResults.get(i).getFilePos() == filePos) {
-                        String innerDoc = retrieveIndex(fileList.get(postingResults.get(i).getFilePos()).getPath(), postingResults.get(i).getTermPos());
-                        String fileName = fileList.get(postingResults.get(i).getFilePos()).getName();
+                        String innerDoc = retrieveIndex(fileList.get(postingResults.get(i).getFilePos()), postingResults.get(i).getTermPos());
+                        String fileName = getName(fileList.get(postingResults.get(i).getFilePos()));
                         result.append("<p style='color: blue; font-size= 130%'><b>"
-                                + "<a href='file:///" + fileList.get(postingResults.get(i).getFilePos()).getAbsolutePath() + "'>" + fileName + "</a>"
+                                + "<a href='file:///" + fileList.get(postingResults.get(i).getFilePos()) + "'>" + fileName + "</a>"
                                 + "\"</b>, <em>Position:</em> " + postingResults.get(i).getTermPos());
                         result.append("<div>" + innerDoc + "</div></p>");
                     }
@@ -1028,6 +1052,7 @@ public class Indexing {
             }
         } else if (phraseMap != null) {
             int noAppear = 0;
+            int querySize = 0;
             for (Map.Entry<Integer, List<Postings>> entry : phraseMap.entrySet()) {
                 List<Postings> termsPos = entry.getValue();
                 for (int i = 0; i < termsPos.size(); i++) {
@@ -1035,20 +1060,21 @@ public class Indexing {
                         if (entry.getValue().get(i).getFilePos() == filePos) {
                             noAppear++;
                         }
+                        querySize = entry.getValue().get(i).getSize();
                     }
                 }
             }
-            result.append("<div><b style='font-size: 130%'>*** " + noAppear + " results in this file ***</b></div>");
+            result.append("<div><b style='font-size: 130%'>*** " + (noAppear/querySize) + " results in this file ***</b></div>");
             for (Map.Entry<Integer, List<Postings>> entry : phraseMap.entrySet()) {
                 List<Postings> termsPos = entry.getValue();
                 for (int i = 0; i < termsPos.size(); i++) {
                     if (termsPos.get(i).getFilePos() == filePos) {
                         String innerDoc;
-                        String fileName = fileList.get(termsPos.get(i).getFilePos()).getName();
-                        String filePath = fileList.get(termsPos.get(i).getFilePos()).getPath();
+                        String fileName = getName(fileList.get(termsPos.get(i).getFilePos()));
+                        String filePath = fileList.get(termsPos.get(i).getFilePos());
                         innerDoc = retrieveIndex(filePath, termsPos.get(i).getTermPos());
                         result.append("<p style='color: blue; font-size= 130%'>\"<b>"
-                                + "<a href='file:///" + fileList.get(termsPos.get(i).getFilePos()).getAbsolutePath() + "'>" + fileName + "</a>"
+                                + "<a href='file:///" + fileList.get(termsPos.get(i).getFilePos()) + "'>" + fileName + "</a>"
                                 + "\"</b>, <em>Position:</em> ");
                         Collections.sort(termsPos.get(i).getTermPos(), new Comparator<Integer>() {
                             @Override
@@ -1068,33 +1094,32 @@ public class Indexing {
         return result.toString();
     }
 
-    public void readIndex() {
-        termMap = new HashMap<>();
-        try {
-            BufferedReader bR = new BufferedReader(new FileReader("indexed/pos.txt"));
-            String line;
-            while ((line = bR.readLine()) != null) {
-                String term = line.split("=>")[0];
-                int pos = Integer.parseInt(line.split("=>")[1]);
-                List<Integer> tempPos = termMap.get(term);
-                if (tempPos == null) {
-                    tempPos = new ArrayList<>();
-                    termMap.put(term, tempPos);
-                }
-                tempPos.add(pos);
-            }
-            bR.close();
-
-        } catch (FileNotFoundException ex) {
-            Logger.getLogger(Indexing.class
-                    .getName()).log(Level.SEVERE, null, ex);
-
-        } catch (IOException ex) {
-            Logger.getLogger(Indexing.class
-                    .getName()).log(Level.SEVERE, null, ex);
-        }
-    }
-
+//    public void readIndex() {
+//        termMap = new HashMap<>();
+//        try {
+//            BufferedReader bR = new BufferedReader(new FileReader("indexed/pos.txt"));
+//            String line;
+//            while ((line = bR.readLine()) != null) {
+//                String term = line.split("=>")[0];
+//                int pos = Integer.parseInt(line.split("=>")[1]);
+//                List<Integer> tempPos = termMap.get(term);
+//                if (tempPos == null) {
+//                    tempPos = new ArrayList<>();
+//                    termMap.put(term, tempPos);
+//                }
+//                tempPos.add(pos);
+//            }
+//            bR.close();
+//
+//        } catch (FileNotFoundException ex) {
+//            Logger.getLogger(Indexing.class
+//                    .getName()).log(Level.SEVERE, null, ex);
+//
+//        } catch (IOException ex) {
+//            Logger.getLogger(Indexing.class
+//                    .getName()).log(Level.SEVERE, null, ex);
+//        }
+//    }
     public String getDefaultPath() {
         File file = new File("res/");
         return file.getAbsolutePath();

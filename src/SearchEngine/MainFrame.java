@@ -42,7 +42,7 @@ public class MainFrame {
     long timeStart;
     long timeEnd;
     boolean isFile = false;
-    List<File> fileList = new ArrayList<>();
+    List<String> fileList = new ArrayList<>();
     public static int currentPage = 0;
     private static MainFrame instance = null;
 
@@ -122,10 +122,10 @@ public class MainFrame {
 //            index.loadAllIndexFiles();
 //        }
         if (index.isIndexed("indexed/")) {
-            mainFrame.txtResult.setText("Loading index ...");
+//            mainFrame.txtResult.setText("Loading index ...");
             index.readFileList();
             index.loadAllIndexFiles();
-            mainFrame.txtResult.setText("Done");
+//            mainFrame.txtResult.setText("Done");
         }
         mainFrame.timeEnd = System.currentTimeMillis();
         System.out.println("Running time: " + (mainFrame.timeEnd - mainFrame.timeStart) / 1000);
@@ -187,22 +187,37 @@ public class MainFrame {
                 chooser.setFileSelectionMode(JFileChooser.FILES_AND_DIRECTORIES);
                 chooser.setFileFilter(new FileNameExtensionFilter("Text files", "doc", "docx", "txt", "xls", "xlsx"));
                 chooser.setMultiSelectionEnabled(true);
-                chooser.setCurrentDirectory(new java.io.File("./src/"));
+                chooser.setCurrentDirectory(new java.io.File("./res/"));
                 chooser.setDialogTitle("Select file(s)/folder");
                 chooser.setAcceptAllFileFilterUsed(false);
 
                 if (chooser.showOpenDialog(null) == JFileChooser.APPROVE_OPTION) {
+                    List<Integer> indexOfIndexed = new ArrayList<>();
+                    File[] files = chooser.getSelectedFiles();
                     if (index.fileList != null) {
-                        if (index.fileList.contains(chooser.getSelectedFile())) {
-                            txtResult.setText("This file has been indexed!");
-                            return;
+                        StringBuilder sb = new StringBuilder();
+                        for (int i = 0; i < files.length; i++) {
+                            if (index.fileList.contains(files[i].getAbsolutePath())) {
+                                sb.append(files[i].getName()).append(" has been indexed!\n");
+                                indexOfIndexed.add(i);
+                            }
                         }
+                        File[] tmp = new File[files.length - indexOfIndexed.size()];
+                        int j = 0;
+                        for (int i = 0; i < files.length; i++) {
+                            if (!indexOfIndexed.contains(i)) {
+                                tmp[j++] = files[i];
+                            }
+                        }
+                        files = tmp;
+                        txtResult.setText(sb.toString());
                     }
                     if (chooser.getSelectedFile().isFile()) {
-                        File[] files = chooser.getSelectedFiles();
-                        String[] folderPath = new String[chooser.getSelectedFiles().length];
+                        String[] folderPath = new String[files.length];
                         for (int i = 0; i < files.length; i++) {
-                            folderPath[i] = files[i].getAbsolutePath();
+                            if (files[i] != null) {
+                                folderPath[i] = files[i].getAbsolutePath();
+                            }
                         }
                         fileList = index.indexFileList(folderPath, true);
                         if (!index.isIndexed("indexed/")) {
@@ -220,9 +235,9 @@ public class MainFrame {
                         String[] folderPath = new String[1];
                         folderPath[0] = chooser.getSelectedFile().getAbsolutePath();
                         lblPath.setText("Folder: " + folderPath);
-                        for (int i = 0; i < fileList.size(); i++) {
-                            System.out.println(fileList.get(i).getName());
-                        }
+//                        for (int i = 0; i < fileList.size(); i++) {
+//                            System.out.println(index.getName(fileList.get(i)));
+//                        }
                         fileList = index.indexFileList(folderPath, false);
                         if (!index.isIndexed("indexed/")) {
                             index.initContainer();
