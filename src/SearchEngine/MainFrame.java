@@ -198,9 +198,13 @@ public class MainFrame {
                         StringBuilder sb = new StringBuilder();
                         for (int i = 0; i < files.length; i++) {
                             if (index.fileList.contains(files[i].getAbsolutePath())) {
-                                sb.append(files[i].getName()).append(" has been indexed!\n");
                                 indexOfIndexed.add(i);
+                            } else {
+                                sb.append("<div>").append(files[i].getName()).append(" has been indexed!" + "</div>");
                             }
+//                            else {
+//                                sb.append(files[i].getName()).append(" will be indexed!").append(System.lineSeparator());
+//                            }
                         }
                         File[] tmp = new File[files.length - indexOfIndexed.size()];
                         int j = 0;
