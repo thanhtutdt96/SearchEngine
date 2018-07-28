@@ -259,6 +259,45 @@ public class Indexing {
                 line[j] = line[j].replaceAll("[^\\p{L}\\s\\d]", " ");
                 for (String tmp : parser.removeSpace(line[j])) {
 
+//                    found = false;
+//                    tmp = tmp.replaceAll("\\b[.,!;\\?]\\B", "");
+//                    List<String> regexes = Parser.getRegexRules();
+//                    for (String regex : regexes) {
+//                        p = Pattern.compile(regex);
+//                        if (p.matcher(tmp).find()) {
+//                            System.out.println(tmp);
+//                            termPos++;
+//                            String term = tmp.toLowerCase();
+//                            if (stopWordsMap.get(term) != null) {
+//                                if (stopWordsMap.get(term) != Boolean.TRUE) {
+//                                    stopWordsMap.put(term, Boolean.TRUE);
+//                                } else if (getHashMapByTerm(term).get(term) != null) {
+//                                    continue;
+//                                }
+//                            }
+//
+//                            List<Posting> postings = getHashMapByTerm(term).get(term);
+//                            if (postings == null) {
+//                                postings = new ArrayList<>();
+//                                getHashMapByTerm(term).put(term, postings);
+//                            }
+//                            if (helper.checkExcelExtention(filePath)) {
+//                                postings.add(new Posting(filePos, helper.getSheetByIndex(j)));
+//                            } else {
+//                                postings.add(new Posting(filePos, termPos));
+//                            }
+//                            found = true;
+//                            break;
+//                        }
+//                    }
+//
+//                    if (found) {
+//                        continue;
+//                    }
+//                    
+//                    tmp = tmp.replaceAll("\\b[.,\\/#!%$\\^&\\*;:{}=\\-_`~()\\?@]*\\B|\\B[.,\\/#!%$\\^&\\*;:{}=\\-_`~()\\?@\\d*?]*\\b", "");
+//
+//                    
                     if (excludeList.contains(tmp)) {
                         continue;
                     }

@@ -324,9 +324,7 @@ public class MainFrame {
                                 }
                             }
                         }
-                    } catch (URISyntaxException ex) {
-                        Logger.getLogger(MainFrame.class.getName()).log(Level.SEVERE, null, ex);
-                    } catch (IOException ex) {
+                    } catch (URISyntaxException | IOException ex) {
                         Logger.getLogger(MainFrame.class.getName()).log(Level.SEVERE, null, ex);
                     }
                 }
